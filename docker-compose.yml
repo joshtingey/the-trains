@@ -1,6 +1,7 @@
 version: '3'
 
 services:
+
   dash_app:
     container_name: dash_app
     restart: always
@@ -8,3 +9,12 @@ services:
     ports:
       - "8000:8000"
     command: gunicorn -w 1 -b :8000 app:server
+    
+  nginx:
+    container_name: nginx
+    restart: always
+    build: ./nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - dash_app
