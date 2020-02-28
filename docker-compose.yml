@@ -23,6 +23,8 @@ services:
       - "8000:8000"
     depends_on:
       - postgres
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
     command: gunicorn -w 1 -b :8000 app:server
 
   nginx:

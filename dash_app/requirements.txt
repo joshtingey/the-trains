@@ -1,3 +1,5 @@
 flask
 dash
 gunicorn
+flask-sqlalchemy
+psycopg2
