@@ -15,17 +15,16 @@ services:
     ports:
       - "5432:5432"
 
-  dash_app:
-    container_name: dash_app
+  dash:
+    container_name: dash
     restart: always
-    build: ./dash_app
+    build: ./dash
     ports:
       - "8000:8000"
     depends_on:
       - postgres
     environment:
       - DATABASE_URL=${DATABASE_URL}
-    command: gunicorn -w 1 -b :8000 app:server
 
   nginx:
     container_name: nginx
@@ -34,7 +33,7 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - dash_app
+      - dash
 
 volumes:
   thetrains-db:

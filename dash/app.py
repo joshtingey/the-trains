@@ -12,9 +12,9 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 server = app.server
 
-server.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
-server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(server)
+#server.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
+#server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+#db = SQLAlchemy(server)
 
 app.layout = html.Div(children=[
     html.H1(children='thetrains.co.uk'),

@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dash
+  namespace: dash
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dash
+  template:
+    metadata:
+      labels:
+        app: dash
+    spec:
+      containers:
+      - name: dash
+        image: docker.io/joshtingey/thetrains-dash
+        ports:
+        - containerPort: 8000

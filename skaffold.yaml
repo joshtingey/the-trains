@@ -1,0 +1,14 @@
+apiVersion: skaffold/v1beta15
+kind: Config
+build:
+  tagPolicy:
+    sha256: {}
+  # defines where to find the code at build time and where to push the resulting image
+  artifacts:
+  - context: dash
+    image: docker.io/joshtingey/thetrains-dash
+# defines the Kubernetes manifests to deploy on each run
+deploy:
+  kubectl:
+    manifests:
+    - manifests/**
