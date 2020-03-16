@@ -7,6 +7,8 @@ build:
   artifacts:
   - context: dash
     image: docker.io/joshtingey/thetrains-dash
+  - context: collector
+    image: docker.io/joshtingey/thetrains-collector
 # defines the Kubernetes manifests to deploy on each run
 deploy:
   kubectl:
