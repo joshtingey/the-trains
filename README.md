@@ -43,3 +43,17 @@ To delete the deployment from the cluster run...
 ```
 $ skaffold delete
 ```
+
+## Connect to postgres
+
+First forward the postgres container port to your local machine...
+
+```
+$ kubectl port-forward service/postgres 7000:5432 -n postgres
+```
+
+Then connect to the database using...
+
+```
+$ psql -h localhost -U admin --password -p 7000 postgresdb
+```
