@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: postgres
-        image: postgres:latest
+        image: postgres:12.2-alpine
         envFrom:
           - configMapRef:
               name: postgres-config

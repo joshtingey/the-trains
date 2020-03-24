@@ -2,6 +2,7 @@ apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
   name: collector
+  namespace: collector
 spec:
   schedule: "0 */1 * * *" # Run every hour on the hour
   jobTemplate:
@@ -11,4 +12,7 @@ spec:
           containers:
           - name: collector
             image: docker.io/joshtingey/thetrains-collector
+            envFrom:
+              - configMapRef:
+                  name: collector-config
           restartPolicy: OnFailure

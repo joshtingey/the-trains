@@ -49,11 +49,11 @@ $ skaffold delete
 First forward the postgres container port to your local machine...
 
 ```
-$ kubectl port-forward service/postgres 7000:5432 -n postgres
+$ kubectl port-forward service/postgres 5432:5432 -n postgres
 ```
 
 Then connect to the database using...
 
 ```
-$ psql -h localhost -U admin --password -p 7000 postgresdb
+$ psql -h localhost -U thetrains --password -p 5432 thetrains-test
 ```
