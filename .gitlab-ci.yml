@@ -3,20 +3,17 @@ image: "tiangolo/docker-with-compose"
 services:
   - docker:dind   
 
-test_python:
-  stage: test
+build:
+  stage: build
   script:
-    - python --version
+    - make up
   
 test_environment:
   stage: test
   script:
     - source ./scripts/environment_test.sh
-
-test_docker_compose:
-  stage: test
-  script:
     - docker-compose --version
+    - python --version
 
 test_collector:
   stage: test
