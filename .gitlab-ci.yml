@@ -1,12 +1,21 @@
-image: "python:3.8.2-alpine"
+image: "docker:latest"
+
+before_script:
+  - apk add --no-cache py-pip python-dev libffi-dev openssl-dev gcc libc-dev make
+  - sudo curl -L "https://github.com/docker/compose/releases/download/1.25.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  - sudo chmod +x /usr/local/bin/docker-compose
 
 test_python:
   stage: test
   script:
     - python --version
-
+  
 test_environment:
   stage: test
   script:
     - source ./scripts/environment_test.sh
-    
+
+test_docker_compose:
+  stage: test
+  script:
+    - docker-compose --version
