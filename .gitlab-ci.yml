@@ -1,5 +1,12 @@
 image: "python:3.8.2-alpine"
 
-test:
+test_python:
+  stage: test
   script:
     - python --version
+
+test_environment:
+  stage: test
+  script:
+    - source ./scripts/environment_test.sh
+    
