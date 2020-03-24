@@ -17,3 +17,8 @@ test_docker_compose:
   stage: test
   script:
     - docker-compose --version
+
+test_collector:
+  stage: test
+  script:
+    - python collector/collector.py

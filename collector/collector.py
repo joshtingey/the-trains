@@ -8,7 +8,7 @@ import json
 def main():
     try:  # Transport API test
         requestString = 'http://transportapi.com/v3/uk/train/station/MAN/live.json?app_id={}&app_key={}'.format(
-            os.environ['TRANSPORTAPI_ID'], os.environ['TRANSPORTAPI_KEY'])
+            os.environ["TRANSPORTAPI_ID"], os.environ["TRANSPORTAPI_KEY"])
         r = requests.get(requestString)
         parsed = json.loads(r.text)
         for d in parsed["departures"]["all"]:
@@ -17,7 +17,8 @@ def main():
                 d["destination_name"],
                 d["aimed_departure_time"]))
     except Exception:
-        raise ConnectionError
+        print("Error: Could not connect to transportapi!")
+        raise
 
 
 if __name__ == '__main__':
