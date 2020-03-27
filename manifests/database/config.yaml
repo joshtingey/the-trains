@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: postgres-config
-  namespace: postgres
+  namespace: thetrains
   labels:
     app: postgres
 data:
