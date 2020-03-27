@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dash-config
+  namespace: thetrains
+  labels:
+    app: dash
+data:
+  DATABASE_URL: postgresql://thetrains:thetrains@postgres:5432/thetrains-test

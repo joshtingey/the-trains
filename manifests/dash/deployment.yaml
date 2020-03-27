@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: dash
-  namespace: dash
+  namespace: thetrains
 spec:
   replicas: 1
   selector:
@@ -16,5 +16,8 @@ spec:
       containers:
       - name: dash
         image: docker.io/joshtingey/thetrains-dash
+        envFrom:
+          - configMapRef:
+              name: dash-config
         ports:
         - containerPort: 8000
