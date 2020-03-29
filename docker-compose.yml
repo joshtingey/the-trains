@@ -15,6 +15,17 @@ services:
     ports:
       - "5432:5432"
 
+  collector:
+    container_name: collector
+    restart: always
+    build: ./collector
+    depends_on:
+      - postgres
+    environment:
+      - NETWORK_RAIL_USER=${NETWORK_RAIL_USER}
+      - NETWORK_RAIL_PASS=${NETWORK_RAIL_PASS}
+      - PYTHONUNBUFFERED=0
+
   dash:
     container_name: dash
     restart: always

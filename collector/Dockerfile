@@ -7,4 +7,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /collector
 
-ENTRYPOINT ["python", "collector.py"]
+ENTRYPOINT ["python", "-u", "collector.py"]
