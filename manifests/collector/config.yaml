@@ -6,5 +6,5 @@ metadata:
   labels:
     app: collector
 data:
-  TRANSPORTAPI_ID: your-transportapi-id
-  TRANSPORTAPI_KEY: you-transportapi-key
+  NETWORK_RAIL_USER: your-network-rail-username
+  NETWORK_RAIL_PASS: your-network-rail-password

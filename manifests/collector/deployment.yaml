@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: collector
+  namespace: thetrains
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: collector
+  template:
+    metadata:
+      labels:
+        app: collector
+    spec:
+      containers:
+      - name: collector
+        image: docker.io/joshtingey/thetrains-collector
+        envFrom:
+          - configMapRef:
+              name: collector-config
+      restartPolicy: OnFailure
