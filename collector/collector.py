@@ -34,11 +34,11 @@ class Collector(object):
         self.init()
 
     def init(self):
-        # TODO: Use the heartbeat protocol
         self.conn = stomp.Connection(
             host_and_ports=[('datafeeds.networkrail.co.uk', 61618)],
             keepalive=True,
-            vhost='datafeeds.networkrail.co.uk'
+            vhost='datafeeds.networkrail.co.uk',
+            heartbeats=(100000, 100000)
         )
 
         self.conn.set_listener('', self)
@@ -101,34 +101,39 @@ class Collector(object):
             ppm=ppm,
             rolling_ppm=rolling_ppm)
 
-        self.session.add(ppm_record)
-        self.session.commit()
+        if self.session is not None:
+            self.session.add(ppm_record)
+            self.session.commit()
 
     def on_error(self, headers, message):
         print('received an error "{}"'.format(message))
-        self.connect_and_subscribe(self.conn)
+        self.connect_and_subscribe()
 
     def on_disconnected(self):
         print('disconnected')
-        self.connect_and_subscribe(self.conn)
+        self.connect_and_subscribe()
+
+    def on_heartbeat_timeout(self):
+        print('heartbeat timeout')
+        self.connect_and_subscribe()
 
     def exit_handler(self, sig, frame):
         print('Disconnecting...')
         self.conn.disconnect()
-        self.session.close()
+        if self.session is not None:
+            self.session.close()
         sys.exit(0)
 
 
 def main():
     try:
         db = create_engine(os.environ["DATABASE_URL"])
+        Session = sessionmaker(db)
+        session = Session()
+        base.metadata.create_all(db)
     except Exception:
-        print("Can't connect to database!")
-        sys.exit(0)
-
-    Session = sessionmaker(db)
-    session = Session()
-    base.metadata.create_all(db)
+        print("Can't connect to database, continue anyway...")
+        session = None
 
     collector = Collector(session)
     collector.connect_and_subscribe()
