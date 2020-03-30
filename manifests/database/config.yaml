@@ -6,6 +6,6 @@ metadata:
   labels:
     app: postgres
 data:
-  POSTGRES_USER: thetrains
-  POSTGRES_PASSWORD: thetrains
-  POSTGRES_DB: thetrains-test
+  POSTGRES_USER: <USER>
+  POSTGRES_PASSWORD: <PASS>
+  POSTGRES_DB: <DB-NAME>

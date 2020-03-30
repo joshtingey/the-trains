@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: collector
-        image: docker.io/joshtingey/thetrains-collector
+        image: registry.gitlab.com/joshtingey/thetrains/collector:latest
         envFrom:
           - configMapRef:
               name: collector-config

@@ -47,3 +47,27 @@ else
   echo 'NETWORK_RAIL_PASS was not set'
   exit 1 # terminate and indicate error
 fi
+
+if [ -n "${SERVER}" ]; 
+then
+  echo 'SERVER was set'
+else
+  echo 'SERVER was not set'
+  exit 1 # terminate and indicate error
+fi
+
+if [ -n "${CERTIFICATE_AUTHORITY_DATA}" ]; 
+then
+  echo 'CERTIFICATE_AUTHORITY_DATA was set'
+else
+  echo 'CERTIFICATE_AUTHORITY_DATA was not set'
+  exit 1 # terminate and indicate error
+fi
+
+if [ -n "${USER_TOKEN}" ]; 
+then
+  echo 'USER_TOKEN was set'
+else
+  echo 'USER_TOKEN was not set'
+  exit 1 # terminate and indicate error
+fi

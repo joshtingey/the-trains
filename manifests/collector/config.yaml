@@ -6,6 +6,6 @@ metadata:
   labels:
     app: collector
 data:
-  NETWORK_RAIL_USER: your-network-rail-username
-  NETWORK_RAIL_PASS: your-network-rail-password
-  DATABASE_URL: postgresql://thetrains:thetrains@postgres:5432/thetrains-test
+  NETWORK_RAIL_USER: <USER>
+  NETWORK_RAIL_PASS: <PASS>
+  DATABASE_URL: <DB-URL>

@@ -52,9 +52,19 @@ release-images:
 
 deploy:
   stage: deploy
+  image: dtzar/helm-kubectl
   script:
-    - ./scripts/deploy.sh
-  only:
-    - master
-    
-    
+    - kubectl config set-cluster k8s --server="${SERVER}"
+    - kubectl config set clusters.k8s.certificate-authority-data ${CERTIFICATE_AUTHORITY_DATA}
+    - kubectl config set-credentials gitlab --token="${USER_TOKEN}"
+    - kubectl config set-context default --cluster=k8s --user=gitlab
+    - kubectl config use-context default
+    - sed -i "s/<DB-URL>/${DATABASE_URL}/g" ./manifests/dash/config.yaml
+    - sed -i "s/<USER>/${NETWORK_RAIL_USER}/g" ./manifests/collector/config.yaml
+    - sed -i "s/<PASS>/${NETWORK_RAIL_PASS}/g" ./manifests/collector/config.yaml
+    - sed -i "s/<DB-URL>/${DATABASE_URL}/g" ./manifests/collector/config.yaml
+    - sed -i "s/<USER>/${POSTGRES_USER}/g" ./manifests/database/config.yaml
+    - sed -i "s/<PASS>/${POSTGRES_PASSWORD}/g" ./manifests/database/config.yaml
+    - sed -i "s/<DB-NAME>/${POSTGRES_DB}/g" ./manifests/database/config.yaml
+    - kubectl apply -f manifests/collector
+    - kubectl apply -f manifests/dash

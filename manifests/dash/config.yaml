@@ -6,4 +6,4 @@ metadata:
   labels:
     app: dash
 data:
-  DATABASE_URL: postgresql://thetrains:thetrains@postgres:5432/thetrains-test
+  DATABASE_URL: <DB-URL>
