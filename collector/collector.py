@@ -122,7 +122,6 @@ class Collector(object):
 def main():
     try:
         db = create_engine(os.environ["DATABASE_URL"])
-        print(db.table_names())
     except Exception:
         print("Can't connect to database!")
         sys.exit(0)
