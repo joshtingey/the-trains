@@ -7,6 +7,7 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from flask_sqlalchemy import SQLAlchemy
+import pandas as pd
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -29,49 +30,103 @@ class PPM(db.Model):
     rolling_ppm = db.Column(db.Float)
 
 
-@server.route('/db_test')
-def db_test():
-    db.create_all()
-    ppm = PPM.query.first()
-    if not ppm:
-        return "No entries in PPM table!"
-    else:
-        date = datetime.fromtimestamp(ppm.date)
-        date = date.strftime('%Y-%m-%d %H:%M:%S')
+def get_df():
+    ppm = PPM.query.all()
+    ppm_dict = {'date': [], 'time': [], 'total': [], 'on_time': [],
+                'late': [], 'ppm': [], 'rolling_ppm': []}
 
-        return ('{}: ({},{},{}), ({},{})'.format(
-            date, ppm.total, ppm.on_time, ppm.late, ppm.ppm, ppm.rolling_ppm
-        ))
+    for entry in ppm:
+        time = datetime.fromtimestamp(entry.date)
+        time = time.strftime('%Y-%m-%d %H:%M:%S')
+        ppm_dict['date'].append(entry.date)
+        ppm_dict['time'].append(time)
+        ppm_dict['total'].append(entry.total)
+        ppm_dict['on_time'].append(entry.on_time)
+        ppm_dict['late'].append(entry.late)
+        ppm_dict['ppm'].append(entry.ppm)
+        ppm_dict['rolling_ppm'].append(entry.rolling_ppm)
+
+    return pd.DataFrame.from_dict(ppm_dict)
 
 
-@server.route('/db_drop')
-def db_drop():
+df = get_df()
+db.create_all()
+
+
+@server.route('/db_refresh')
+def db_refresh():
     db.drop_all()
-    return "All tables dropped."
+    db.create_all()
+    return "Database refreshed."
 
 
-app.layout = html.Div(children=[
-    html.H1(children='thetrains'),
-
-    html.Div(children='''
-        thetrains dash application
-    '''),
-
+app.layout = html.Div([
+    html.Button('Update', id='update-button'),
     dcc.Graph(
-        id='example-graph',
+        id='number-graph',
         figure={
             'data': [
-                {'x': [1, 2, 3], 'y': [4, 1, 2],
-                    'type': 'bar', 'name': 'Train1'},
-                {'x': [1, 2, 3], 'y': [2, 4, 5],
-                    'type': 'bar', 'name': 'Train2'},
+                {'x': df['time'], 'y': df['total'],
+                 'type': 'scatter', 'name': 'Total'},
+                {'x': df['time'], 'y': df['on_time'],
+                 'type': 'scatter', 'name': 'On Time'},
+                {'x': df['time'], 'y': df['late'],
+                 'type': 'scatter', 'name': 'Late'}
             ],
             'layout': {
-                'title': 'thetrains example visualisation'
+                'title': 'Current Train Totals'
+            }
+        }
+    ),
+    dcc.Graph(
+        id='ppm-graph',
+        figure={
+            'data': [
+                {'x': df['time'], 'y': df['ppm'],
+                 'type': 'scatter', 'name': 'PPM'},
+                {'x': df['time'], 'y': df['rolling_ppm'],
+                 'type': 'scatter', 'name': 'Rolling PPM'},
+            ],
+            'layout': {
+                'title': 'Public Performance Measure (PPM)'
             }
         }
     )
 ])
+
+
+@app.callback(
+    [dash.dependencies.Output('number-graph', 'figure'),
+     dash.dependencies.Output('ppm-graph', 'figure')],
+    [dash.dependencies.Input('update-button', 'n_clicks')])
+def update_graph(n_clicks):
+    df = get_df()
+    return [
+        {
+            'data': [
+                {'x': df['time'], 'y': df['total'],
+                 'type': 'scatter', 'name': 'Total'},
+                {'x': df['time'], 'y': df['on_time'],
+                 'type': 'scatter', 'name': 'On Time'},
+                {'x': df['time'], 'y': df['late'],
+                 'type': 'scatter', 'name': 'Late'}
+            ],
+            'layout': {
+                'title': 'Current Train Totals'
+            }
+        },
+        {
+            'data': [
+                {'x': df['time'], 'y': df['ppm'],
+                 'type': 'scatter', 'name': 'PPM'},
+                {'x': df['time'], 'y': df['rolling_ppm'],
+                 'type': 'scatter', 'name': 'Rolling PPM'},
+            ],
+            'layout': {
+                'title': 'Public Performance Measure (PPM)'
+            }
+        }
+    ]
 
 
 if __name__ == '__main__':
