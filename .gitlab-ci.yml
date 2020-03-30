@@ -7,11 +7,29 @@ services:
 variables:
   DOCKER_HOST: tcp://docker:2376
   DOCKER_TLS_CERTDIR: "/certs"
+  COLLECTOR_TEST_IMAGE: registry.gitlab.com/joshtingey/thetrains-collector:$CI_COMMIT_REF_SLUG
+  DASH_TEST_IMAGE: registry.gitlab.com/joshtingey/thetrains-dash:$CI_COMMIT_REF_SLUG
+  
+stages:
+  - build
+  - test  
 
 before_script:
-  - docker info
+  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+build-collector:
+  stage: build
+  script:
+    - docker build --pull -t $COLLECTOR_TEST_IMAGE collector/
+    - docker push $COLLECTOR_TEST_IMAGE
+
+build-env:
+  stage: build
+  script:
+    - docker build --pull -t $DASH_TEST_IMAGE dash/
+    - docker push $DASH_TEST_IMAGE
   
-test_environment:
+test_env:
   stage: test
   script:
     - source ./scripts/environment_test.sh
