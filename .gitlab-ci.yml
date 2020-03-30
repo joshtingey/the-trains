@@ -7,11 +7,16 @@ services:
 variables:
   DOCKER_HOST: tcp://docker:2376
   DOCKER_TLS_CERTDIR: "/certs"
-  TEST_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  DASH_TEST_IMAGE: $(CI_REGISTRY_IMAGE)-dash:latest-build
+  COLLECTOR_TEST_IMAGE: $(CI_REGISTRY_IMAGE)-collector:latest-build
+  DASH_RELEASE_IMAGE: $(CI_REGISTRY_IMAGE)-dash:latest
+  COLLECTOR_RELEASE_IMAGE: $(CI_REGISTRY_IMAGE)-collector:latest
 
 stages:
   - build
   - test  
+  - release
+  - deploy
 
 before_script:
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -19,10 +24,37 @@ before_script:
 build-dash:
   stage: build
   script:
-    - docker build --pull -t $TEST_IMAGE dash/
-    - docker push $TEST_IMAGE
+    - docker build --pull -t $DASH_TEST_IMAGE dash/
+    - docker push $DASH_TEST_IMAGE
   
+build-collector:
+  stage: build
+  script:
+    - docker build --pull -t $COLLECTOR_TEST_IMAGE collector/
+    - docker push $COLLECTOR_TEST_IMAGE
+
 test_env:
   stage: test
   script:
-    - source ./scripts/environment_test.sh
+    - source ./scripts/env_test.sh
+
+release-images:
+  stage: release
+  script:
+    - docker pull $DASH_TEST_IMAGE
+    - docker tag $DASH_TEST_IMAGE $DASH_RELEASE_IMAGE
+    - docker push $DASH_RELEASE_IMAGE
+    - docker pull $COLLECTOR_TEST_IMAGE
+    - docker tag $COLLECTOR_TEST_IMAGE $COLLECTOR_RELEASE_IMAGE
+    - docker push $COLLECTOR_RELEASE_IMAGE
+  only:
+    - master
+
+deploy:
+  stage: deploy
+  script:
+    - ./scripts/deploy.sh
+  only:
+    - master
+    
+    
