@@ -24,18 +24,26 @@ else
   exit 1 # terminate and indicate error
 fi
 
-if [ -n "${TRANSPORTAPI_ID}" ]; 
+if [ -n "${DATABASE_URL}" ]; 
 then
-  echo 'TRANSPORTAPI_ID was set'
+  echo 'DATABASE_URL was set'
 else
-  echo 'TRANSPORTAPI_ID was not set'
+  echo 'DATABASE_URL was not set'
   exit 1 # terminate and indicate error
 fi
 
-if [ -n "${TRANSPORTAPI_KEY}" ]; 
+if [ -n "${NETWORK_RAIL_USER}" ]; 
 then
-  echo 'TRANSPORTAPI_KEY was set'
+  echo 'NETWORK_RAIL_USER was set'
 else
-  echo 'TRANSPORTAPI_KEY was not set'
+  echo 'NETWORK_RAIL_USER was not set'
+  exit 1 # terminate and indicate error
+fi
+
+if [ -n "${NETWORK_RAIL_PASS}" ]; 
+then
+  echo 'NETWORK_RAIL_PASS was set'
+else
+  echo 'NETWORK_RAIL_PASS was not set'
   exit 1 # terminate and indicate error
 fi
