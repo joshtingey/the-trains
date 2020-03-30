@@ -25,6 +25,7 @@ services:
       - NETWORK_RAIL_USER=${NETWORK_RAIL_USER}
       - NETWORK_RAIL_PASS=${NETWORK_RAIL_PASS}
       - PYTHONUNBUFFERED=0
+      - DATABASE_URL=${DATABASE_URL}
 
   dash:
     container_name: dash
