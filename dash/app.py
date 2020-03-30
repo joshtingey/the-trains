@@ -2,6 +2,7 @@
 
 import os
 from datetime import datetime
+import time
 
 import dash
 import dash_core_components as dcc
@@ -33,21 +34,24 @@ class PPM(db.Model):
 
 def get_df():
     ppm = PPM.query.all()
-    ppm_dict = {'date': [], 'time': [], 'total': [], 'on_time': [],
+    ppm_dict = {'date': [], 'timestamp': [], 'total': [], 'on_time': [],
                 'late': [], 'ppm': [], 'rolling_ppm': []}
 
     for entry in ppm:
-        time = datetime.fromtimestamp(entry.date)
-        time = time.strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = datetime.fromtimestamp(entry.date)
+        timestamp = timestamp.strftime('%Y-%m-%d %H:%M:%S')
         ppm_dict['date'].append(entry.date)
-        ppm_dict['time'].append(time)
+        ppm_dict['timestamp'].append(timestamp)
         ppm_dict['total'].append(entry.total)
         ppm_dict['on_time'].append(entry.on_time)
         ppm_dict['late'].append(entry.late)
         ppm_dict['ppm'].append(entry.ppm)
         ppm_dict['rolling_ppm'].append(entry.rolling_ppm)
 
-    return pd.DataFrame.from_dict(ppm_dict)
+    # Crete df and only return entries from last 24 hours
+    df = pd.DataFrame.from_dict(ppm_dict)
+    df = df[df.date >= (int(time.time()) - 86400)]
+    return df
 
 
 df = get_df()
@@ -67,11 +71,11 @@ app.layout = html.Div([
         id='number-graph',
         figure={
             'data': [
-                {'x': df['time'], 'y': df['total'],
+                {'x': df['timestamp'], 'y': df['total'],
                  'type': 'scatter', 'name': 'Total'},
-                {'x': df['time'], 'y': df['on_time'],
+                {'x': df['timestamp'], 'y': df['on_time'],
                  'type': 'scatter', 'name': 'On Time'},
-                {'x': df['time'], 'y': df['late'],
+                {'x': df['timestamp'], 'y': df['late'],
                  'type': 'scatter', 'name': 'Late'}
             ],
             'layout': {
@@ -83,9 +87,9 @@ app.layout = html.Div([
         id='ppm-graph',
         figure={
             'data': [
-                {'x': df['time'], 'y': df['ppm'],
+                {'x': df['timestamp'], 'y': df['ppm'],
                  'type': 'scatter', 'name': 'PPM'},
-                {'x': df['time'], 'y': df['rolling_ppm'],
+                {'x': df['timestamp'], 'y': df['rolling_ppm'],
                  'type': 'scatter', 'name': 'Rolling PPM'},
             ],
             'layout': {
@@ -105,11 +109,11 @@ def update_graph(n_clicks):
     return [
         {
             'data': [
-                {'x': df['time'], 'y': df['total'],
+                {'x': df['timestamp'], 'y': df['total'],
                  'type': 'scatter', 'name': 'Total'},
-                {'x': df['time'], 'y': df['on_time'],
+                {'x': df['timestamp'], 'y': df['on_time'],
                  'type': 'scatter', 'name': 'On Time'},
-                {'x': df['time'], 'y': df['late'],
+                {'x': df['timestamp'], 'y': df['late'],
                  'type': 'scatter', 'name': 'Late'}
             ],
             'layout': {
@@ -118,9 +122,9 @@ def update_graph(n_clicks):
         },
         {
             'data': [
-                {'x': df['time'], 'y': df['ppm'],
+                {'x': df['timestamp'], 'y': df['ppm'],
                  'type': 'scatter', 'name': 'PPM'},
-                {'x': df['time'], 'y': df['rolling_ppm'],
+                {'x': df['timestamp'], 'y': df['rolling_ppm'],
                  'type': 'scatter', 'name': 'Rolling PPM'},
             ],
             'layout': {
