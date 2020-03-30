@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+from datetime import datetime
 
 import dash
 import dash_core_components as dcc
@@ -17,26 +18,30 @@ server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(server)
 
 
-class User(db.Model):
-    __tablename__ = 'users'
-    id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String())
-    surname = db.Column(db.String())
+class PPM(db.Model):
+    __tablename__ = 'ppm'
+
+    date = db.Column(db.Integer, primary_key=True)
+    total = db.Column(db.Integer)
+    on_time = db.Column(db.Integer)
+    late = db.Column(db.Integer)
+    ppm = db.Column(db.Float)
+    rolling_ppm = db.Column(db.Float)
 
 
 @server.route('/db_test')
 def db_test():
-    status = 'old'
     db.create_all()
-    user = User.query.first()
-    if not user:
-        u = User(name='The', surname='Trains')
-        db.session.add(u)
-        db.session.commit()
-        status = 'new'
-    user = User.query.first()
-    return "User '{} {}' in database ({}). ".format(
-        user.name, user.surname, status)
+    ppm = PPM.query.first()
+    if not ppm:
+        return "No entries in PPM table!"
+    else:
+        date = datetime.fromtimestamp(ppm.date)
+        date = date.strftime('%Y-%m-%d %H:%M:%S')
+
+        return ('{}: ({},{},{}), ({},{})'.format(
+            date, ppm.total, ppm.on_time, ppm.late, ppm.ppm, ppm.rolling_ppm
+        ))
 
 
 @server.route('/db_drop')
