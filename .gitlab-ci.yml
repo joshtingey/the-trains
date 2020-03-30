@@ -7,10 +7,10 @@ services:
 variables:
   DOCKER_HOST: tcp://docker:2376
   DOCKER_TLS_CERTDIR: "/certs"
-  DASH_TEST_IMAGE: $CI_REGISTRY_IMAGE-dash:latest-build
-  COLLECTOR_TEST_IMAGE: $CI_REGISTRY_IMAGE-collector:latest-build
-  DASH_RELEASE_IMAGE: $CI_REGISTRY_IMAGE-dash:latest
-  COLLECTOR_RELEASE_IMAGE: $CI_REGISTRY_IMAGE-collector:latest
+  DASH_TEST_IMAGE: $CI_REGISTRY_IMAGE/dash:latest-build
+  COLLECTOR_TEST_IMAGE: $CI_REGISTRY_IMAGE/collector:latest-build
+  DASH_RELEASE_IMAGE: $CI_REGISTRY_IMAGE/dash:latest
+  COLLECTOR_RELEASE_IMAGE: $CI_REGISTRY_IMAGE/collector:latest
 
 stages:
   - build
