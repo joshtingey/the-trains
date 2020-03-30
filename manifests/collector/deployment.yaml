@@ -19,4 +19,4 @@ spec:
         envFrom:
           - configMapRef:
               name: collector-config
-      restartPolicy: OnFailure
+      restartPolicy: Always
