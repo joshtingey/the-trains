@@ -18,18 +18,17 @@ stages:
   - release
   - deploy
 
-before_script:
-  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-
 build-dash:
   stage: build
   script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker build --pull -t $DASH_TEST_IMAGE dash/
     - docker push $DASH_TEST_IMAGE
   
 build-collector:
   stage: build
   script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker build --pull -t $COLLECTOR_TEST_IMAGE collector/
     - docker push $COLLECTOR_TEST_IMAGE
 
@@ -41,6 +40,7 @@ test:
 release-images:
   stage: release
   script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker pull $DASH_TEST_IMAGE
     - docker tag $DASH_TEST_IMAGE $DASH_RELEASE_IMAGE
     - docker push $DASH_RELEASE_IMAGE
@@ -60,3 +60,5 @@ deploy:
     - kubectl config set-context default --cluster=k8s --user=gitlab
     - kubectl config use-context default
     - source ./script/deploy.sh
+  only:
+    - master
