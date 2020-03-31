@@ -33,10 +33,10 @@ build-collector:
     - docker build --pull -t $COLLECTOR_TEST_IMAGE collector/
     - docker push $COLLECTOR_TEST_IMAGE
 
-test_env:
+test:
   stage: test
   script:
-    - source ./scripts/env_test.sh
+    - source ./scripts/test.sh
 
 release-images:
   stage: release
@@ -59,12 +59,4 @@ deploy:
     - kubectl config set-credentials gitlab --token="${USER_TOKEN}"
     - kubectl config set-context default --cluster=k8s --user=gitlab
     - kubectl config use-context default
-    - sed -i "s/<DB-URL>/${DATABASE_URL}/g" ./manifests/dash/config.yaml
-    - sed -i "s/<USER>/${NETWORK_RAIL_USER}/g" ./manifests/collector/config.yaml
-    - sed -i "s/<PASS>/${NETWORK_RAIL_PASS}/g" ./manifests/collector/config.yaml
-    - sed -i "s/<DB-URL>/${DATABASE_URL}/g" ./manifests/collector/config.yaml
-    - sed -i "s/<USER>/${POSTGRES_USER}/g" ./manifests/database/config.yaml
-    - sed -i "s/<PASS>/${POSTGRES_PASSWORD}/g" ./manifests/database/config.yaml
-    - sed -i "s/<DB-NAME>/${POSTGRES_DB}/g" ./manifests/database/config.yaml
-    - kubectl apply -f manifests/collector
-    - kubectl apply -f manifests/dash
+    - source ./script/deploy.sh

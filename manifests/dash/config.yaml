@@ -6,4 +6,6 @@ metadata:
   labels:
     app: dash
 data:
-  DATABASE_URL: <DB-URL>
+  DB_USER: <DB_USER>
+  DB_PASS: <DB_PASS>
+  DB_NAME: <DB_NAME>

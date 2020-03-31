@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import os
+from os import getenv
 from datetime import datetime
 import time
 
@@ -16,7 +16,10 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.title = 'thetrains'
 server = app.server
 
-server.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
+db_url = ('postgresql://' + getenv('DB_USER') + ':' + getenv('DB_PASS') +
+          '@postgres:5432/' + getenv('DB_NAME'))
+
+server.config['SQLALCHEMY_DATABASE_URI'] = db_url
 server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(server)
 

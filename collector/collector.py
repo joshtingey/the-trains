@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import os
+from os import getenv
 import sys
 import signal
 from time import sleep
@@ -56,10 +56,10 @@ class Collector(object):
 
         self.counter += 1
         self.conn.connect(
-            username=os.environ["NETWORK_RAIL_USER"],
-            passcode=os.environ["NETWORK_RAIL_PASS"],
+            username=getenv("NR_USER"),
+            passcode=getenv("NR_PASS"),
             wait=True,
-            headers={'client-id': os.environ["NETWORK_RAIL_USER"]}
+            headers={'client-id': getenv("NR_USER")}
         )
         self.conn.subscribe(
             '/topic/RTPPM_ALL',
@@ -127,7 +127,9 @@ class Collector(object):
 
 def main():
     try:
-        db = create_engine(os.environ["DATABASE_URL"])
+        db_url = ('postgresql://' + getenv('DB_USER') + ':' +
+                  getenv('DB_PASS') + '@postgres:5432/' + getenv('DB_NAME'))
+        db = create_engine(db_url)
         Session = sessionmaker(db)
         session = Session()
         base.metadata.create_all(db)

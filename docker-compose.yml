@@ -7,9 +7,9 @@ services:
     restart: always
     image: postgres:12.2-alpine
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_DB=${DB_NAME}
     volumes:
       - thetrains-db:/var/lib/postgresql/data
     ports:
@@ -22,10 +22,12 @@ services:
     depends_on:
       - postgres
     environment:
-      - NETWORK_RAIL_USER=${NETWORK_RAIL_USER}
-      - NETWORK_RAIL_PASS=${NETWORK_RAIL_PASS}
+      - NR_USER=${NR_USER}
+      - NR_PASS=${NR_PASS}
       - PYTHONUNBUFFERED=0
-      - DATABASE_URL=${DATABASE_URL}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_NAME=${DB_NAME}
 
   dash:
     container_name: dash
@@ -36,7 +38,9 @@ services:
     depends_on:
       - postgres
     environment:
-      - DATABASE_URL=${DATABASE_URL}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_NAME=${DB_NAME}
 
   nginx:
     container_name: nginx

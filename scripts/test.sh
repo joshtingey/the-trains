@@ -1,50 +1,42 @@
 #! /bin/bash
 
-if [ -n "${POSTGRES_USER}" ]; 
+if [ -n "${DB_USER}" ]; 
 then
-  echo 'POSTGRES_USER was set'
+  echo 'DB_USER was set'
 else
-  echo 'POSTGRES_USER was not set'
+  echo 'DB_USER was not set'
   exit 1 # terminate and indicate error
 fi
 
-if [ -n "${POSTGRES_PASSWORD}" ]; 
+if [ -n "${DB_PASS}" ]; 
 then
-  echo 'POSTGRES_PASSWORD was set'
+  echo 'DB_PASS was set'
 else
-  echo 'POSTGRES_PASSWORD was not set'
+  echo 'DB_PASS was not set'
   exit 1 # terminate and indicate error
 fi
 
-if [ -n "${POSTGRES_DB}" ]; 
+if [ -n "${DB_NAME}" ]; 
 then
-  echo 'POSTGRES_DB was set'
+  echo 'DB_NAME was set'
 else
-  echo 'POSTGRES_DB was not set'
+  echo 'DB_NAME was not set'
   exit 1 # terminate and indicate error
 fi
 
-if [ -n "${DATABASE_URL}" ]; 
+if [ -n "${NR_USER}" ]; 
 then
-  echo 'DATABASE_URL was set'
+  echo 'NR_USER was set'
 else
-  echo 'DATABASE_URL was not set'
+  echo 'NR_USER was not set'
   exit 1 # terminate and indicate error
 fi
 
-if [ -n "${NETWORK_RAIL_USER}" ]; 
+if [ -n "${NR_PASS}" ]; 
 then
-  echo 'NETWORK_RAIL_USER was set'
+  echo 'NR_PASS was set'
 else
-  echo 'NETWORK_RAIL_USER was not set'
-  exit 1 # terminate and indicate error
-fi
-
-if [ -n "${NETWORK_RAIL_PASS}" ]; 
-then
-  echo 'NETWORK_RAIL_PASS was set'
-else
-  echo 'NETWORK_RAIL_PASS was not set'
+  echo 'NR_PASS was not set'
   exit 1 # terminate and indicate error
 fi
 

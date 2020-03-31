@@ -6,9 +6,9 @@ build:
   # defines where to find the code at build time and where to push the resulting image
   artifacts:
   - context: dash
-    image: docker.io/joshtingey/thetrains-dash
+    image: registry.gitlab.com/joshtingey/thetrains/dash
   - context: collector
-    image: docker.io/joshtingey/thetrains-collector
+    image: registry.gitlab.com/joshtingey/thetrains/collector
 # defines the Kubernetes manifests to deploy on each run
 deploy:
   kubectl:
