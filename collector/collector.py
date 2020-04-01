@@ -30,7 +30,7 @@ class PPM(base):
 class Collector(object):
     def __init__(self, session):
         self.session = session
-        self.counter = 0
+        self.max_attempts = 10
         self.init()
 
     def init(self):
@@ -46,29 +46,33 @@ class Collector(object):
         signal.signal(signal.SIGTERM, self.exit_handler)
 
     def connect_and_subscribe(self):
-        # We use an exponential backoff and a max number of retry limit
-        print("Attempting connection...")
-        if self.counter >= 10:
-            print('Maximum number of connection attempts made!')
-            sys.exit(0)
-        for wait in range(self.counter):
-            sleep(pow(wait, 2))
+        # We attempt to connect up to 'max_attempts' times
+        for attempt in range(self.max_attempts):
 
-        self.counter += 1
-        self.conn.connect(
-            username=getenv("NR_USER"),
-            passcode=getenv("NR_PASS"),
-            wait=True,
-            headers={'client-id': getenv("NR_USER")}
-        )
-        self.conn.subscribe(
-            '/topic/RTPPM_ALL',
-            'thetrains-rtppm',
-            ack='client-individual',
-            headers={'activemq.subscriptionName': 'thetrains-rtppm'}
-        )
-        self.counter = 0  # Reset counter to zero
-        print("connected!")
+            print("Connection attempt: {}".format(attempt+1))
+            sleep(pow(attempt, 2))  # Exponential backoff in wait
+
+            try:
+                self.conn.connect(  # Connect to server
+                    username=getenv("NR_USER"),
+                    passcode=getenv("NR_PASS"),
+                    wait=True,
+                    headers={'client-id': getenv("NR_USER")}
+                )
+                self.conn.subscribe(  # Subscribe to rtppm feed
+                    '/topic/RTPPM_ALL',
+                    'thetrains-rtppm',
+                    ack='client-individual',
+                    headers={'activemq.subscriptionName': 'thetrains-rtppm'}
+                )
+                print("Connection successful")
+                break  # Leave connection attempt loop and proceed
+            except Exception as e:
+                print("Connection exception: {}".format(e))
+
+            if attempt == (self.max_attempts-1):
+                print('Maximum number of connection attempts made!')
+                sys.exit(0)
 
     def on_message(self, headers, message):
         self.conn.ack(
@@ -140,7 +144,7 @@ def main():
     collector = Collector(session)
     collector.connect_and_subscribe()
 
-    while 1:
+    while 1:  # Infinite loop, only exit() can cause stop
         sleep(1)
 
 
