@@ -16,6 +16,7 @@ spec:
       containers:
       - name: collector
         image: registry.gitlab.com/joshtingey/thetrains/collector:latest
+        imagePullPolicy: "Always"
         envFrom:
           - configMapRef:
               name: collector-config

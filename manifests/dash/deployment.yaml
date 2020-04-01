@@ -16,6 +16,7 @@ spec:
       containers:
       - name: dash
         image: registry.gitlab.com/joshtingey/thetrains/dash:latest
+        imagePullPolicy: "Always"
         envFrom:
           - configMapRef:
               name: dash-config
