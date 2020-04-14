@@ -1,4 +1,5 @@
-.env
 .vscode
-env_dev.sh
-env_prod.sh
+.env
+.env.sh
+.dev.sh
+pythonenv/
