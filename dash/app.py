@@ -1,23 +1,31 @@
 # -*- coding: utf-8 -*-
 
-from os import getenv
-from datetime import datetime
+import os
+import datetime
 import time
+import logging
+import sys
 
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from flask_sqlalchemy import SQLAlchemy
 import pandas as pd
+import plotly.express as px
+
+
+log = logging.getLogger(__name__)
+
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+px.set_mapbox_access_token(os.getenv('MAPBOX_TOKEN'))
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.title = 'thetrains'
 server = app.server
 
-db_url = ('postgresql://' + getenv('DB_USER') + ':' + getenv('DB_PASS') +
-          '@postgres:5432/' + getenv('DB_NAME'))
+db_url = 'postgresql://{}:{}@postgres:5432/{}'.format(
+    os.getenv('DB_USER'), os.getenv('DB_PASS'), os.getenv('DB_NAME'))
 
 server.config['SQLALCHEMY_DATABASE_URI'] = db_url
 server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -41,7 +49,7 @@ def get_df():
                 'late': [], 'ppm': [], 'rolling_ppm': []}
 
     for entry in ppm:
-        timestamp = datetime.fromtimestamp(entry.date)
+        timestamp = datetime.datetime.fromtimestamp(entry.date)
         timestamp = timestamp.strftime('%Y-%m-%d %H:%M:%S')
         ppm_dict['date'].append(entry.date)
         ppm_dict['timestamp'].append(timestamp)
@@ -66,6 +74,11 @@ def db_refresh():
     db.drop_all()
     db.create_all()
     return "Database refreshed."
+
+
+map_df = px.data.carshare()
+map_fig = px.scatter_mapbox(map_df, lat="centroid_lat", lon="centroid_lon", color="peak_hour", size="car_hours",
+                            color_continuous_scale=px.colors.cyclical.IceFire, size_max=15, zoom=10)
 
 
 app.layout = html.Div([
@@ -99,7 +112,8 @@ app.layout = html.Div([
                 'title': 'Public Performance Measure (PPM)'
             }
         }
-    )
+    ),
+    dcc.Graph(figure=map_fig)
 ])
 
 
@@ -137,5 +151,22 @@ def update_graph(n_clicks):
     ]
 
 
-if __name__ == '__main__':
+def setup_logging():
+    """Setup logging and stdout printing"""
+    log.setLevel(logging.INFO)
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    log.addHandler(handler)
+
+
+def main():
+    """Main function called when app starts."""
+    setup_logging()
     app.run_server(debug=True)
+
+
+if __name__ == '__main__':
+    main()
+    
