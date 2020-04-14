@@ -1,9 +1,3 @@
-FROM nginx:1.17.9-alpine
+FROM staticfloat/nginx-certbot
 
-RUN rm /etc/nginx/nginx.conf
-COPY nginx.conf /etc/nginx/
-
-RUN rm /etc/nginx/conf.d/default.conf
-COPY project.conf /etc/nginx/conf.d/
-
-COPY ./static ./static
+COPY project.conf /etc/nginx/user.conf.d/
