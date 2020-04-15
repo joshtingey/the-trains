@@ -278,10 +278,10 @@ class STOMPCollector(object):
 def parse_args():
     """Parse the command line arguments"""
     parser = argparse.ArgumentParser(description='collector')
-    parser.add_argument('-t', '--type', help='collector type')
-    parser.add_argument('-a', '--attempts', help='max number of connection attempts',
-                        default=10)
+    parser.add_argument('-a', '--attempts', help='max number of connection attempts', default=10)
     parser.add_argument('--verbose', action='store_true', help='print debug level messages')
+    parser.add_argument('--ppm', action='store_true', help='subscribe to ppm feed')
+    parser.add_argument('--tm', action='store_true', help='subscribe to tm feed')
     return parser.parse_args()
 
 
@@ -310,8 +310,12 @@ def main():
 
     collector = STOMPCollector(db_url, args.attempts)
     collector.connect()
-    collector.subscribe(Feeds.PPM)
-    collector.subscribe(Feeds.TM)
+
+    if args.ppm:
+        collector.subscribe(Feeds.PPM)
+
+    if args.tm:
+        collector.subscribe(Feeds.TM)
 
     while(1):
         time.sleep(1)
