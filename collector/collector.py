@@ -5,17 +5,16 @@ import sys
 import signal
 import time
 import datetime
-import datetime
 import logging
 import asyncio
 import argparse
 import enum
 
-from sqlalchemy import create_engine  
-from sqlalchemy import Column, Integer, Float  
-from sqlalchemy.ext.declarative import declarative_base  
+from sqlalchemy import create_engine
+from sqlalchemy import Column, Integer, Float
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import stomp  
+import stomp
 import orjson
 
 
@@ -26,6 +25,8 @@ base = declarative_base()
 class Feeds(enum.Enum):
     PPM = 0
     TM = 1
+    TD = 2
+
 
 class StompFeed():
     def __init__(self, name, topic, durable):
@@ -45,7 +46,11 @@ class StompFeed():
 
 class PPMFeed(StompFeed):
     def __init__(self):
-        super().__init__(Feeds.PPM, "/topic/RTPPM_ALL", "thetrains-ppm")
+        super().__init__(
+            Feeds.PPM,
+            "/topic/RTPPM_ALL",
+            "thetrains-ppm"
+        )
 
     class table(base):
         """Define the PPM database table"""
@@ -96,7 +101,11 @@ class PPMFeed(StompFeed):
 
 class TMFeed(StompFeed):
     def __init__(self):
-        super().__init__(Feeds.TM, "/topic/TRAIN_MVT_ED_TOC", "thetrains-ed-tm")
+        super().__init__(
+            Feeds.TM,
+            "/topic/TRAIN_MVT_ED_TOC",
+            "thetrains-ed-tm"
+        )
 
     async def handle_message(self, message):
         """Handle the TM JSON message"""
@@ -116,27 +125,52 @@ class TMFeed(StompFeed):
                 ))
 
 
+class TDFeed(StompFeed):
+    def __init__(self):
+        super().__init__(
+            Feeds.TD,
+            "/topic/TD_LNW_C_SIG_AREA",
+            "thetrains-c-td"
+        )
+
+    async def handle_message(self, message):
+        """Handle the TM JSON message"""
+        try:
+            parsed = orjson.loads(message)
+        except orjson.JSONDecodeError:
+            log.error("Can't decode STOMP message")
+            return
+
+        log.debug("Length of TM message: {}".format(len(parsed)))
+        if len(parsed) > 1:
+            for msg in parsed:
+                log.info(msg.keys())
+
+
 def get_feed(feed):
     if feed is Feeds.PPM:
         return PPMFeed()
     elif feed is Feeds.TM:
         return TMFeed()
+    elif feed in Feeds.TD:
+        return TDFeed()
     else:
         log.warning("Don't recongnise feed name")
         return None
 
 
 class STOMPCollector(object):
-    """STOMP collector class which handles the connection and topic subscription"""
+    """STOMP collector class handles the connection and topic subscription"""
+
     def __init__(self, db_url, attempts):
-        self.session = None # Database session
-        self.conn = None # STOMP connection
-        self.feeds = {} # STOMP feed subscriptions
-        self.attempts = attempts # Max number of connection attempts
+        self.session = None  # Database session
+        self.conn = None  # STOMP connection
+        self.feeds = {}  # STOMP feed subscriptions
+        self.attempts = attempts  # Max number of connection attempts
         self.init(db_url)
 
     def init(self, db_url):
-        """Initialise the DB connection, stomp connection and signal handlers"""
+        """Initialise the DB, stomp connection and signal handlers"""
         log.info("Initialising STOMP collector with DB URL: {}".format(db_url))
 
         try:  # Setup the database ORM session
@@ -147,7 +181,7 @@ class STOMPCollector(object):
         except Exception:
             log.warning("DB connection error, will continue anyway")
             self.session = None
-        
+
         try:  # Setup the STOMP connection to network rail feed
             self.conn = stomp.Connection(
                 host_and_ports=[('datafeeds.networkrail.co.uk', 61618)],
@@ -155,11 +189,11 @@ class STOMPCollector(object):
                 vhost='datafeeds.networkrail.co.uk',
                 heartbeats=(100000, 100000)
             )
-            self.conn.set_listener('handler', self)  # Register self as the connection listener
-            #self.conn.set_listener('stats', stomp.StatsListener())
-            #self.conn.set_listener('print', stomp.PrintingListener())
+            self.conn.set_listener('handler', self)  # Register self
+            # self.conn.set_listener('stats', stomp.StatsListener())
+            # self.conn.set_listener('print', stomp.PrintingListener())
         except Exception as e:
-            log.warning("STOMP setup error ({}), will continue anyway".format(e))
+            log.warning("STOMP setup error ({}), continue anyway".format(e))
             self.conn = None
 
         # Setup signal handlers
@@ -170,9 +204,14 @@ class STOMPCollector(object):
         self.connect()
         for feed in self.feeds.keys():
             try:  # Attempt to subscribe to the feed
-                self.conn.subscribe(self.feeds[feed].topic, self.feeds[feed].durable, ack='client-individual',
-                                    headers={'activemq.subscriptionName': self.feeds[feed].durable})
-                log.info("Subscribed to feed ({})".format(self.feeds[feed].name))
+                self.conn.subscribe(
+                    self.feeds[feed].topic,
+                    self.feeds[feed].durable,
+                    ack='client-individual',
+                    headers={'activemq.subscriptionName':
+                             self.feeds[feed].durable}
+                )
+                log.info("Subscribed to {}".format(self.feeds[feed].name))
             except Exception as e:
                 log.error("STOMP subscription error ({})".format(e))
 
@@ -183,9 +222,12 @@ class STOMPCollector(object):
             time.sleep(pow(attempt, 2))  # Exponential backoff in wait
 
             try:  # Attempt STOMP connection to Network Rail
-                if self.conn != None:
-                    self.conn.connect(username=os.getenv("NR_USER"), passcode=os.getenv("NR_PASS"),
-                                      wait=True, headers={'client-id': os.getenv("NR_USER")})
+                if self.conn is not None:
+                    self.conn.connect(
+                        username=os.getenv("NR_USER"),
+                        passcode=os.getenv("NR_PASS"),
+                        wait=True, headers={'client-id': os.getenv("NR_USER")}
+                    )
                 else:
                     log.warning("No STOMP connection to connect to")
                     break
@@ -193,15 +235,15 @@ class STOMPCollector(object):
                 log.info("STOMP connection successful")
                 break  # Leave connection attempt loop and proceed
             except Exception as e:
-                log.error("STOMP connection error ({}), will retry...".format(e))
+                log.error("STOMP connection error ({}), retry...".format(e))
 
             if attempt == (self.attempts-1):
-                log.fatal("Maximum number of connection attempts made, exiting")
+                log.fatal("Maximum number of connection attempts made")
                 sys.exit(0)
 
     def subscribe(self, name):
         """Subscribe to a Network Rail STOMP feed"""
-        feed = get_feed(name)  # Get the correct feed implementation class given the name
+        feed = get_feed(name)  # Get the correct feed implementation
 
         if name in self.feeds:  # Check if we already have this feed
             log.warning("Already subscribed to this feed")
@@ -209,8 +251,12 @@ class STOMPCollector(object):
 
         if feed is not None:
             try:  # Attempt to subscribe to the feed
-                self.conn.subscribe(feed.topic, feed.durable, ack='client-individual',
-                                    headers={'activemq.subscriptionName': feed.durable})
+                self.conn.subscribe(
+                    feed.topic,
+                    feed.durable,
+                    ack='client-individual',
+                    headers={'activemq.subscriptionName': feed.durable}
+                )
                 feed.set_session(self.session)
                 self.feeds[name] = feed
                 log.info("Subscribed to feed ({})".format(name))
@@ -219,15 +265,13 @@ class STOMPCollector(object):
 
     def unsubscribe(self, name):
         """Unsubscribe from a Network Rail STOMP feed"""
-        found = False
-
         if name in self.feeds:
             try:
                 self.conn.unsubscribe(self.feeds[name].durable)
                 del self.feeds[name]
                 log.info("Unsubscribed from feed ({})".format(name))
             except Exception as e:
-                log.error("STOMP unsubscribe error ({}), will keep feed".format(e))
+                log.error("STOMP unsubscribe error ({}), keep feed".format(e))
                 return
         else:
             log.warning("No feed with that name")
@@ -235,7 +279,8 @@ class STOMPCollector(object):
     def on_message(self, headers, message):
         """STOMP on_message handler"""
         log.debug('Got message')
-        self.conn.ack(id=headers['message-id'], subscription=headers['subscription'])
+        self.conn.ack(id=headers['message-id'],
+                      subscription=headers['subscription'])
 
         for name, feed in self.feeds.items():
             if str(feed.topic) == str(headers["destination"]):
@@ -278,10 +323,16 @@ class STOMPCollector(object):
 def parse_args():
     """Parse the command line arguments"""
     parser = argparse.ArgumentParser(description='collector')
-    parser.add_argument('-a', '--attempts', help='max number of connection attempts', default=10)
-    parser.add_argument('--verbose', action='store_true', help='print debug level messages')
-    parser.add_argument('--ppm', action='store_true', help='subscribe to ppm feed')
-    parser.add_argument('--tm', action='store_true', help='subscribe to tm feed')
+    parser.add_argument('-a', '--attempts', default=10,
+                        help='max number of connection attempts')
+    parser.add_argument('--verbose', action='store_true',
+                        help='print debug level messages')
+    parser.add_argument('--ppm', action='store_true',
+                        help='subscribe to ppm feed')
+    parser.add_argument('--tm', action='store_true',
+                        help='subscribe to tm feed')
+    parser.add_argument('--td', action='store_true',
+                        help='subscribe to td feed')
     return parser.parse_args()
 
 
@@ -316,6 +367,9 @@ def main():
 
     if args.tm:
         collector.subscribe(Feeds.TM)
+
+    if args.td:
+        collector.subscribe(Feeds.TD)
 
     while(1):
         time.sleep(1)
