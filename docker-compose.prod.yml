@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+
+  collector:
+    container_name: collector
+    restart: always
+    build: ./collector
+    depends_on:
+      - postgres
+    env_file: .prod
+    environment:
+      - PYTHONUNBUFFERED=0
+    command: --ppm
+
+  nginx:
+    container_name: nginx
+    restart: unless-stopped
+    build: ./nginx
+    ports:
+        - 80:80/tcp
+        - 443:443/tcp
+    environment:
+        CERTBOT_EMAIL: ${NR_USER}
+    volumes:
+      - letsencrypt:/etc/letsencrypt
+    depends_on:
+      - dash
+
+volumes:
+  letsencrypt:

@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+
+  collector:
+    container_name: collector
+    restart: "no"
+    build: ./collector
+    depends_on:
+      - postgres
+    env_file: .dev
+    environment:
+      - PYTHONUNBUFFERED=0
+
+    command: --ppm --td
