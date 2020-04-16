@@ -5,15 +5,19 @@ import sys
 import argparse
 import logging
 
-from sqlalchemy import create_engine  
-from sqlalchemy import Column, Integer, Float  
-from sqlalchemy.ext.declarative import declarative_base  
-from sqlalchemy.orm import sessionmaker
+import matplotlib.pyplot as plt 
+from pymongo import MongoClient
 import networkx as nx
 
 
 log = logging.getLogger(__name__)
-base = declarative_base()
+
+mongo_url = 'mongodb://{}:{}@mongo:27017'.format(
+    os.getenv('MONGO_INITDB_ROOT_USERNAME'),
+    os.getenv('MONGO_INITDB_ROOT_PASSWORD'))
+mongo_url_local = 'mongodb://{}:{}@localhost:27017'.format(
+    os.getenv('MONGO_INITDB_ROOT_USERNAME'),
+    os.getenv('MONGO_INITDB_ROOT_PASSWORD'))
 
 
 def parse_args():
@@ -44,21 +48,20 @@ def main():
     args = parse_args()
     setup_logging(args.verbose)
 
-    db_url = 'postgresql://{}:{}@postgres:5432/{}'.format(
-        os.getenv('DB_USER'), os.getenv('DB_PASS'), os.getenv('DB_NAME'))
-
-    try:  # Setup the database ORM session
-        db = create_engine(db_url)
-        Session = sessionmaker(db)
-        session = Session()
-        base.metadata.create_all(db)
+    try:
+        client = MongoClient(mongo_url_local)
+        mongo = client.thetrains_mongo_test
+        log.info("Connected to mongo at {}".format(mongo_url_local))
     except Exception:
-        log.warning("DB connection error, will continue anyway")
-        session = None
+        log.warning("Mongo connection error for {}, continue".format(
+            mongo_url_local))
 
     G = nx.Graph()
-    G.add_edges_from([(0, 1), (1, 2), (2, 3)])
-    log.info(list(G.edges))
+    for movement in mongo.tm.find():
+        G.add_edge(movement["from"], movement["to"])
+
+    nx.draw_spring(G, with_labels=True, font_weight='bold')
+    plt.show()
 
 
 if __name__ == '__main__':

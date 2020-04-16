@@ -6,12 +6,22 @@ services:
     container_name: collector
     restart: always
     build: ./collector
-    depends_on:
-      - postgres
     env_file: .prod
     environment:
       - PYTHONUNBUFFERED=0
+    depends_on:
+      - postgres
     command: --ppm
+
+  dash:
+    container_name: dash
+    restart: always
+    build: ./dash
+    env_file: .dev
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
 
   nginx:
     container_name: nginx

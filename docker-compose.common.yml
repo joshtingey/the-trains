@@ -7,20 +7,21 @@ services:
     restart: always
     image: postgres:12.2-alpine
     env_file: .dev
-    volumes:
-      - thetrains-db:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    volumes:
+      - thetrains_postgres:/var/lib/postgresql/data
 
-  dash:
-    container_name: dash
+  mongo:
+    container_name: mongo
     restart: always
-    build: ./dash
-    ports:
-      - "8000:8000"
-    depends_on:
-      - postgres
+    image: mongo:latest
     env_file: .dev
-
+    ports:
+      - 27017:27017
+    volumes:
+      - thetrains_mongo:/data/db
+    
 volumes:
-  thetrains-db:
+  thetrains_postgres:
+  thetrains_mongo:

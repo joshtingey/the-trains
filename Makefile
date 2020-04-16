@@ -1,3 +1,6 @@
+db: 
+	docker-compose -f docker-compose.common.yml up --build -d
+
 dev:
 	docker-compose -f docker-compose.common.yml -f docker-compose.dev.yml up --build -d
 

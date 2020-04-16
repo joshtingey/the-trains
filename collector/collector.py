@@ -14,12 +14,25 @@ from sqlalchemy import create_engine
 from sqlalchemy import Column, Integer, Float, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from pymongo import MongoClient
 import stomp
 import orjson
 
 
 log = logging.getLogger(__name__)
 base = declarative_base()
+
+
+postgres_url = 'postgresql://{}:{}@postgres:5432/{}'.format(
+    os.getenv('DB_USER'), os.getenv('DB_PASS'), os.getenv('DB_NAME'))
+postgres_url_local = 'postgresql://{}:{}@localhost:5432/{}'.format(
+    os.getenv('DB_USER'), os.getenv('DB_PASS'), os.getenv('DB_NAME'))
+mongo_url = 'mongodb://{}:{}@mongo:27017'.format(
+    os.getenv('MONGO_INITDB_ROOT_USERNAME'),
+    os.getenv('MONGO_INITDB_ROOT_PASSWORD'))
+mongo_url_local = 'mongodb://{}:{}@localhost:27017'.format(
+    os.getenv('MONGO_INITDB_ROOT_USERNAME'),
+    os.getenv('MONGO_INITDB_ROOT_PASSWORD'))
 
 
 class Feeds(enum.Enum):
@@ -33,11 +46,12 @@ class StompFeed():
         self.name = name
         self.topic = topic
         self.durable = durable
-        self.session = None
+        self.postgres = None
 
-    def set_session(self, session):
-        """Set the database session"""
-        self.session = session
+    def set_db(self, postgres, mongo):
+        """Set the databases"""
+        self.postgres = postgres
+        self.mongo = mongo
 
     async def handle_message(self, message):
         """Handle the JSON message"""
@@ -94,9 +108,9 @@ class PPMFeed(StompFeed):
             rolling_ppm=rolling_ppm
         )
 
-        if self.session is not None:
-            self.session.add(ppm_record)
-            self.session.commit()
+        if self.postgres is not None:
+            self.postgres.add(ppm_record)
+            self.postgres.commit()
 
 
 class TMFeed(StompFeed):
@@ -133,14 +147,6 @@ class TDFeed(StompFeed):
             "thetrains-c-td"
         )
 
-    class td_table(base):
-        """Define the TD database table"""
-        __tablename__ = 'td'
-        date = Column(Integer, primary_key=True)
-        area = Column(String)
-        from_berth = Column(String)
-        to_berth = Column(String)
-
     async def handle_message(self, message):
         """Handle the TM JSON message"""
         try:
@@ -153,9 +159,24 @@ class TDFeed(StompFeed):
             if "CA_MSG" in msg.keys():
                 step = msg["CA_MSG"]
                 if step["area_id"] == "MP":
-                    log.debug("time: {}, area_id: {}, msg_type: {}, from: {}, to: {}, descr: {}".format(
-                        step["time"], step["area_id"], step["msg_type"], step["from"], step["to"], step["descr"]
+                    movement = {
+                        "date": datetime.datetime.fromtimestamp(
+                            int(step["time"])/1000),
+                        "from": str(step["area_id"] + step["from"]),
+                        "to": str(step["area_id"] + step["to"])
+                    }
+
+                    log.debug("time: {}, from: {}, to: {}".format(
+                        movement["date"].strftime('%Y-%m-%d %H:%M:%S'),
+                        movement["from"],
+                        movement["to"]
                     ))
+
+                    if self.mongo is not None:
+                        try:
+                            self.mongo.tm.insert_one(movement)
+                        except Exception as e:
+                            log.warning("DB error ({})".format(e))
 
 
 def get_feed(feed):
@@ -173,25 +194,45 @@ def get_feed(feed):
 class STOMPCollector(object):
     """STOMP collector class handles the connection and topic subscription"""
 
-    def __init__(self, db_url, attempts):
-        self.session = None  # Database session
+    def __init__(self, attempts):
+        self.postgres = None  # Postgres database session
+        self.mongo = None  # Mongo database
         self.conn = None  # STOMP connection
         self.feeds = {}  # STOMP feed subscriptions
         self.attempts = attempts  # Max number of connection attempts
-        self.init(db_url)
+        self.init()
 
-    def init(self, db_url):
-        """Initialise the DB, stomp connection and signal handlers"""
-        log.info("Initialising STOMP collector with DB URL: {}".format(db_url))
-
-        try:  # Setup the database ORM session
-            db = create_engine(db_url)
+    def init_postgres(self, url):
+        try:
+            db = create_engine(url)
             Session = sessionmaker(db)
-            self.session = Session()
+            self.postgres = Session()
             base.metadata.create_all(db)
+            log.info("Connected to postgres at {}".format(url))
         except Exception:
-            log.warning("DB connection error, will continue anyway")
-            self.session = None
+            log.warning("Postgres connection error for {}, continue".format(
+                url))
+            self.postgres = None
+
+    def init_mongo(self, url):
+        try:
+            client = MongoClient(url)
+            self.mongo = client.thetrains_mongo_test
+            log.info("Connected to mongo at {}".format(url))
+        except Exception:
+            log.warning("Mongo connection error for {}, continue".format(
+                url))
+            self.mongo = None
+
+    def init(self):
+        """Initialise the DB, stomp connection and signal handlers"""
+        self.init_postgres(postgres_url_local)
+        if self.postgres is None:
+            self.init_postgres(postgres_url)
+
+        self.init_mongo(mongo_url_local)
+        if self.mongo is None:
+            self.init_mongo(mongo_url)
 
         try:  # Setup the STOMP connection to network rail feed
             self.conn = stomp.Connection(
@@ -268,7 +309,7 @@ class STOMPCollector(object):
                     ack='client-individual',
                     headers={'activemq.subscriptionName': feed.durable}
                 )
-                feed.set_session(self.session)
+                feed.set_db(self.postgres, self.mongo)
                 self.feeds[name] = feed
                 log.info("Subscribed to feed ({})".format(name))
             except Exception as e:
@@ -310,8 +351,8 @@ class STOMPCollector(object):
             log.info("Unsubscribed from feed ({})".format(feed))
         self.conn.disconnect()
         log.info("Disconnected from NR STOMP Server")
-        if self.session is not None:
-            self.session.close()
+        if self.postgres is not None:
+            self.postgres.close()
             log.info("Closed DB session")
         sys.exit(0)
 
@@ -365,12 +406,9 @@ def setup_logging(verbose):
 def main():
     """Main function called when collector starts."""
     args = parse_args()
-    db_url = 'postgresql://{}:{}@postgres:5432/{}'.format(
-        os.getenv('DB_USER'), os.getenv('DB_PASS'), os.getenv('DB_NAME'))
-
     setup_logging(args.verbose)
 
-    collector = STOMPCollector(db_url, args.attempts)
+    collector = STOMPCollector(args.attempts)
     collector.connect()
 
     if args.ppm:
