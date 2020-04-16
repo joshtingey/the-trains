@@ -11,7 +11,7 @@ import argparse
 import enum
 
 from sqlalchemy import create_engine
-from sqlalchemy import Column, Integer, Float
+from sqlalchemy import Column, Integer, Float, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import stomp
@@ -52,7 +52,7 @@ class PPMFeed(StompFeed):
             "thetrains-ppm"
         )
 
-    class table(base):
+    class ppm_table(base):
         """Define the PPM database table"""
         __tablename__ = 'ppm'
         date = Column(Integer, primary_key=True)
@@ -85,7 +85,7 @@ class PPMFeed(StompFeed):
             date, total, on_time, late, ppm, rolling_ppm
         ))
 
-        ppm_record = self.table(
+        ppm_record = self.ppm_table(
             date=timestamp,
             total=total,
             on_time=on_time,
@@ -133,6 +133,14 @@ class TDFeed(StompFeed):
             "thetrains-c-td"
         )
 
+    class td_table(base):
+        """Define the TD database table"""
+        __tablename__ = 'td'
+        date = Column(Integer, primary_key=True)
+        area = Column(String)
+        from_berth = Column(String)
+        to_berth = Column(String)
+
     async def handle_message(self, message):
         """Handle the TM JSON message"""
         try:
@@ -141,10 +149,13 @@ class TDFeed(StompFeed):
             log.error("Can't decode STOMP message")
             return
 
-        log.debug("Length of TM message: {}".format(len(parsed)))
-        if len(parsed) > 1:
-            for msg in parsed:
-                log.info(msg.keys())
+        for msg in parsed:
+            if "CA_MSG" in msg.keys():
+                step = msg["CA_MSG"]
+                if step["area_id"] == "MP":
+                    log.debug("time: {}, area_id: {}, msg_type: {}, from: {}, to: {}, descr: {}".format(
+                        step["time"], step["area_id"], step["msg_type"], step["from"], step["to"], step["descr"]
+                    ))
 
 
 def get_feed(feed):
@@ -152,7 +163,7 @@ def get_feed(feed):
         return PPMFeed()
     elif feed is Feeds.TM:
         return TMFeed()
-    elif feed in Feeds.TD:
+    elif feed is Feeds.TD:
         return TDFeed()
     else:
         log.warning("Don't recongnise feed name")
