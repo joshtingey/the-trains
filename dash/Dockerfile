@@ -13,8 +13,6 @@ COPY ./common/ ./common/
 COPY ./dash/* ./
 COPY ./dash/assets/ ./assets/
 
-RUN ls ./assets
-
 EXPOSE 8000
 
 ENTRYPOINT ["gunicorn", "-w", "1", "-b", ":8000", "app:server"]
