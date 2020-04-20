@@ -39,14 +39,16 @@ class LocalConfig:
     @staticmethod
     def init_logging(log):
         """Initiates logging."""
-        LOG_LEVEL = logging.getLevelName(config(
+        log_level = logging.getLevelName(config(
             "LOG_LEVEL", default='INFO'
         ))
-        log.setLevel(LOG_LEVEL)
-        file_logger.setLevel(LOG_LEVEL)
-        log.addHandler(file_logger)
-        client_logger.setLevel(LOG_LEVEL)
+        file_log = config("FILE_LOG", cast=bool, default=False)
+        log.setLevel(log_level)
+        client_logger.setLevel(log_level)
         log.addHandler(client_logger)
+        if file_log:
+            file_logger.setLevel(log_level)
+            log.addHandler(file_logger)
 
 
 class DockerConfig:
@@ -73,14 +75,16 @@ class DockerConfig:
     @staticmethod
     def init_logging(log):
         """Initiates logging."""
-        LOG_LEVEL = logging.getLevelName(config(
+        log_level = logging.getLevelName(config(
             "LOG_LEVEL", default='INFO'
         ))
-        log.setLevel(LOG_LEVEL)
-        file_logger.setLevel(LOG_LEVEL)
-        log.addHandler(file_logger)
-        client_logger.setLevel(LOG_LEVEL)
+        file_log = config("FILE_LOG", cast=bool, default=False)
+        log.setLevel(log_level)
+        client_logger.setLevel(log_level)
         log.addHandler(client_logger)
+        if file_log:
+            file_logger.setLevel(log_level)
+            log.addHandler(file_logger)
 
 
 # Create a config dictionary which is used while initiating the application.
