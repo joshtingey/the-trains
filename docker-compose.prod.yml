@@ -8,17 +8,15 @@ services:
     build: 
       context: ./
       dockerfile: ./collector/Dockerfile
-    environment:
-      - PYTHONUNBUFFERED=0
     depends_on:
       - mongo
 
-  dash:
-    container_name: dash
+  thetrains:
+    container_name: thetrains
     restart: always
     build: 
       context: ./
-      dockerfile: ./dash/Dockerfile
+      dockerfile: ./thetrains/Dockerfile
     ports:
       - "8000:8000"
     depends_on:
@@ -36,7 +34,7 @@ services:
     volumes:
       - letsencrypt:/etc/letsencrypt
     depends_on:
-      - dash
+      - thetrains
 
 volumes:
   letsencrypt:

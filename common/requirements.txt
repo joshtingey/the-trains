@@ -1,2 +1,4 @@
 python-decouple
 pymongo
+Flask-Script
+pandas

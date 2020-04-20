@@ -282,7 +282,7 @@ def main():
     conf = config_dict[config("ENV", cast=str, default="local")]
     conf.init_logging(log)
 
-    mongo = Mongo(log, conf)
+    mongo = Mongo(log, conf.MG_URI)
 
     collector = STOMPCollector(mongo, conf)
     collector.connect()

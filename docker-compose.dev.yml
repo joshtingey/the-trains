@@ -11,12 +11,12 @@ services:
     depends_on:
       - mongo
 
-  dash:
-    container_name: dash
-    restart: always
+  thetrains:
+    container_name: thetrains
+    restart: "no"
     build: 
       context: ./
-      dockerfile: ./dash/Dockerfile
+      dockerfile: ./thetrains/Dockerfile
     ports:
       - "8000:8000"
     depends_on:

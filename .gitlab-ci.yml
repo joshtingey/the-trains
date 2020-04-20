@@ -7,9 +7,9 @@ services:
 variables:
   DOCKER_HOST: tcp://docker:2376
   DOCKER_TLS_CERTDIR: "/certs"
-  DASH_TEST_IMAGE: $CI_REGISTRY_IMAGE/dash:latest-build
+  THETRAINS_TEST_IMAGE: $CI_REGISTRY_IMAGE/thetrains:latest-build
   COLLECTOR_TEST_IMAGE: $CI_REGISTRY_IMAGE/collector:latest-build
-  DASH_RELEASE_IMAGE: $CI_REGISTRY_IMAGE/dash:latest
+  THETRAINS_RELEASE_IMAGE: $CI_REGISTRY_IMAGE/thetrains:latest
   COLLECTOR_RELEASE_IMAGE: $CI_REGISTRY_IMAGE/collector:latest
 
 stages:
@@ -17,12 +17,12 @@ stages:
   - test  
   - release
 
-build-dash:
+build-thetrains:
   stage: build
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build --pull -t $DASH_TEST_IMAGE dash/
-    - docker push $DASH_TEST_IMAGE
+    - docker build --pull -t $THETRAINS_TEST_IMAGE thetrains/
+    - docker push $THETRAINS_TEST_IMAGE
   
 build-collector:
   stage: build
@@ -40,9 +40,9 @@ release-images:
   stage: release
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker pull $DASH_TEST_IMAGE
-    - docker tag $DASH_TEST_IMAGE $DASH_RELEASE_IMAGE
-    - docker push $DASH_RELEASE_IMAGE
+    - docker pull $THETRAINS_TEST_IMAGE
+    - docker tag $THETRAINS_TEST_IMAGE $THETRAINS_RELEASE_IMAGE
+    - docker push $THETRAINS_RELEASE_IMAGE
     - docker pull $COLLECTOR_TEST_IMAGE
     - docker tag $COLLECTOR_TEST_IMAGE $COLLECTOR_RELEASE_IMAGE
     - docker push $COLLECTOR_RELEASE_IMAGE

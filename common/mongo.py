@@ -4,14 +4,15 @@ derive from. This abstracts away the mechanics of the database from the
 rest of the source code"""
 
 from pymongo import MongoClient
+import pandas as pd
 
 
 class Mongo(object):
     """Class to handle MongoDB data flow"""
-    def __init__(self, log, config):
+    def __init__(self, log, uri):
         self.log = log  # We take the logger from the application
         self.client = None  # Mongo database
-        self.init(config.MG_URI)
+        self.init(uri)
 
     def init(self, uri):
         """Initialise the MongoDB connection"""
@@ -25,10 +26,8 @@ class Mongo(object):
             )
             self.client = None
 
-    def drop_all(self):
-        names = self.mongo.get_collections()
-        for col in names:
-            self.mongo[col].drop()
+    def drop(self, name):
+        self.client.drop_collection(name)
 
     def add(self, collection, doc):
         """Add a document to a collection"""
@@ -44,3 +43,24 @@ class Mongo(object):
         except Exception as e:
             self.log.warning("Mongo error ({})".format(e))
             return None
+
+    def get_ppm_df(self):
+        ppm_dict = {
+            'date': [],
+            'total': [],
+            'on_time': [],
+            'late': [],
+            'ppm': [],
+            'rolling_ppm': []
+        }
+
+        for doc in self.get("ppm"):
+            ppm_dict['date'].append(doc['date'])
+            ppm_dict['total'].append(doc['total'])
+            ppm_dict['on_time'].append(doc['on_time'])
+            ppm_dict['late'].append(doc['late'])
+            ppm_dict['ppm'].append(doc['ppm'])
+            ppm_dict['rolling_ppm'].append(doc['rolling_ppm'])
+
+        df = pd.DataFrame.from_dict(ppm_dict)
+        return df

@@ -1,7 +1,7 @@
 flask
 dash
 gunicorn
-pandas
 plotly
 networkx
 matplotlib
+dash-bootstrap-components
