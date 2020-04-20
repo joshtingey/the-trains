@@ -11,6 +11,9 @@ RUN pip install -r requirements.txt --no-cache-dir
 COPY .env .
 COPY ./common/ ./common/
 COPY ./dash/* ./
+COPY ./dash/assets/ ./assets/
+
+RUN ls ./assets
 
 EXPOSE 8000
 
