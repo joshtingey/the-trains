@@ -1,6 +1,3 @@
 .vscode
-.dev
-.dev.sh
-.prod
-.prod.sh
-pythonenv/
+.env
+thetrains_env/

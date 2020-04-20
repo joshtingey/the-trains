@@ -1,5 +1,2 @@
-SQLAlchemy
-psycopg2-binary
 stomp.py
 orjson
-pymongo

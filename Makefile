@@ -12,4 +12,4 @@ down:
 
 clean:
 	docker-compose down
-	docker system prune -fa
+	docker system prune -fasudo 

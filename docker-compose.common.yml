@@ -2,26 +2,15 @@ version: '3'
 
 services:
 
-  postgres:
-    container_name: postgres
-    restart: always
-    image: postgres:12.2-alpine
-    env_file: .dev
-    ports:
-      - "5432:5432"
-    volumes:
-      - thetrains_postgres:/var/lib/postgresql/data
-
   mongo:
     container_name: mongo
     restart: always
     image: mongo:latest
-    env_file: .dev
+    env_file: .env
     ports:
       - 27017:27017
     volumes:
       - thetrains_mongo:/data/db
     
 volumes:
-  thetrains_postgres:
   thetrains_mongo:

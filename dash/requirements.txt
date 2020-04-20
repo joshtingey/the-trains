@@ -1,7 +1,7 @@
 flask
 dash
 gunicorn
-flask-sqlalchemy
-psycopg2-binary
 pandas
 plotly
+networkx
+matplotlib

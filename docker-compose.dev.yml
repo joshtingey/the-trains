@@ -5,21 +5,19 @@ services:
   collector:
     container_name: collector
     restart: "no"
-    build: ./collector
-    env_file: .dev
-    environment:
-      - PYTHONUNBUFFERED=0
+    build: 
+      context: ./
+      dockerfile: ./collector/Dockerfile
     depends_on:
-      - postgres
+      - mongo
 
   dash:
     container_name: dash
-    restart: "no"
-    build: ./dash
-    env_file: .dev
+    restart: always
+    build: 
+      context: ./
+      dockerfile: ./dash/Dockerfile
     ports:
       - "8000:8000"
     depends_on:
-      - postgres
-
-    command: --ppm --td
+      - mongo

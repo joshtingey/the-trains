@@ -1,79 +1,58 @@
 # -*- coding: utf-8 -*-
 
-import os
-import datetime
-import time
-import logging
-import sys
-
+from decouple import config
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-from flask_sqlalchemy import SQLAlchemy
 import pandas as pd
 import plotly.express as px
 
-
-log = logging.getLogger(__name__)
-
+from common.config import config_dict
+from common.mongo import Mongo
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-px.set_mapbox_access_token(os.getenv('MAPBOX_TOKEN'))
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.title = 'thetrains'
 server = app.server
 
-db_url = 'postgresql://{}:{}@postgres:5432/{}'.format(
-    os.getenv('DB_USER'), os.getenv('DB_PASS'), os.getenv('DB_NAME'))
+conf = config_dict[config("ENV", cast=str, default="local")]
+conf.init_logging(app.logger)
+app.logger.removeHandler(app.logger.handlers[0])
 
-server.config['SQLALCHEMY_DATABASE_URI'] = db_url
-server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(server)
-
-
-class PPM(db.Model):
-    __tablename__ = 'ppm'
-
-    date = db.Column(db.Integer, primary_key=True)
-    total = db.Column(db.Integer)
-    on_time = db.Column(db.Integer)
-    late = db.Column(db.Integer)
-    ppm = db.Column(db.Float)
-    rolling_ppm = db.Column(db.Float)
+mongo = Mongo(app.logger, conf)
+px.set_mapbox_access_token(conf.MAPBOX_TOKEN)
 
 
 def get_df():
-    ppm = PPM.query.all()
-    ppm_dict = {'date': [], 'timestamp': [], 'total': [], 'on_time': [],
-                'late': [], 'ppm': [], 'rolling_ppm': []}
+    ppm_dict = {
+        'date': [],
+        'total': [],
+        'on_time': [],
+        'late': [],
+        'ppm': [],
+        'rolling_ppm': []
+    }
 
-    for entry in ppm:
-        timestamp = datetime.datetime.fromtimestamp(entry.date)
-        timestamp = timestamp.strftime('%Y-%m-%d %H:%M:%S')
-        ppm_dict['date'].append(entry.date)
-        ppm_dict['timestamp'].append(timestamp)
-        ppm_dict['total'].append(entry.total)
-        ppm_dict['on_time'].append(entry.on_time)
-        ppm_dict['late'].append(entry.late)
-        ppm_dict['ppm'].append(entry.ppm)
-        ppm_dict['rolling_ppm'].append(entry.rolling_ppm)
+    for doc in mongo.get("ppm"):
+        ppm_dict['date'].append(doc['date'])
+        ppm_dict['total'].append(doc['total'])
+        ppm_dict['on_time'].append(doc['on_time'])
+        ppm_dict['late'].append(doc['late'])
+        ppm_dict['ppm'].append(doc['ppm'])
+        ppm_dict['rolling_ppm'].append(doc['rolling_ppm'])
 
-    # Crete df and only return entries from last 24 hours
     df = pd.DataFrame.from_dict(ppm_dict)
-    df = df[df.date >= (int(time.time()) - 86400)]
     return df
 
 
 df = get_df()
-db.create_all()
 
 
-@server.route('/db_refresh')
+@server.route('/db_drop_all')
 def db_refresh():
-    db.drop_all()
-    db.create_all()
-    return "Database refreshed."
+    mongo.drop_all()
+    return "All collections dropped"
 
 
 map_df = px.data.carshare()
@@ -89,11 +68,11 @@ app.layout = html.Div([
         id='number-graph',
         figure={
             'data': [
-                {'x': df['timestamp'], 'y': df['total'],
+                {'x': df['date'], 'y': df['total'],
                  'type': 'scatter', 'name': 'Total'},
-                {'x': df['timestamp'], 'y': df['on_time'],
+                {'x': df['date'], 'y': df['on_time'],
                  'type': 'scatter', 'name': 'On Time'},
-                {'x': df['timestamp'], 'y': df['late'],
+                {'x': df['date'], 'y': df['late'],
                  'type': 'scatter', 'name': 'Late'}
             ],
             'layout': {
@@ -105,9 +84,9 @@ app.layout = html.Div([
         id='ppm-graph',
         figure={
             'data': [
-                {'x': df['timestamp'], 'y': df['ppm'],
+                {'x': df['date'], 'y': df['ppm'],
                  'type': 'scatter', 'name': 'PPM'},
-                {'x': df['timestamp'], 'y': df['rolling_ppm'],
+                {'x': df['date'], 'y': df['rolling_ppm'],
                  'type': 'scatter', 'name': 'Rolling PPM'},
             ],
             'layout': {
@@ -128,11 +107,11 @@ def update_graph(n_clicks):
     return [
         {
             'data': [
-                {'x': df['timestamp'], 'y': df['total'],
+                {'x': df['date'], 'y': df['total'],
                  'type': 'scatter', 'name': 'Total'},
-                {'x': df['timestamp'], 'y': df['on_time'],
+                {'x': df['date'], 'y': df['on_time'],
                  'type': 'scatter', 'name': 'On Time'},
-                {'x': df['timestamp'], 'y': df['late'],
+                {'x': df['date'], 'y': df['late'],
                  'type': 'scatter', 'name': 'Late'}
             ],
             'layout': {
@@ -141,9 +120,9 @@ def update_graph(n_clicks):
         },
         {
             'data': [
-                {'x': df['timestamp'], 'y': df['ppm'],
+                {'x': df['date'], 'y': df['ppm'],
                  'type': 'scatter', 'name': 'PPM'},
-                {'x': df['timestamp'], 'y': df['rolling_ppm'],
+                {'x': df['date'], 'y': df['rolling_ppm'],
                  'type': 'scatter', 'name': 'Rolling PPM'},
             ],
             'layout': {
@@ -153,21 +132,5 @@ def update_graph(n_clicks):
     ]
 
 
-def setup_logging():
-    """Setup logging and stdout printing"""
-    log.setLevel(logging.INFO)
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    log.addHandler(handler)
-
-
-def main():
-    """Main function called when app starts."""
-    setup_logging()
-    app.run_server(debug=True)
-
-
 if __name__ == '__main__':
-    main()
+    app.run_server()
