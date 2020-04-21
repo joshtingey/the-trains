@@ -1,42 +1,18 @@
 #! /bin/bash
 
-if [ -n "${DB_USER}" ]; 
+if [ -n "${MONGO_INITDB_ROOT_USERNAME}" ]; 
 then
-  echo 'DB_USER was set'
+  echo 'MONGO_INITDB_ROOT_USERNAME was set'
 else
-  echo 'DB_USER was not set'
+  echo 'MONGO_INITDB_ROOT_USERNAME was not set'
   exit 1 # terminate and indicate error
 fi
 
-if [ -n "${DB_PASS}" ]; 
+if [ -n "${MONGO_INITDB_ROOT_PASSWORD}" ]; 
 then
-  echo 'DB_PASS was set'
+  echo 'MONGO_INITDB_ROOT_PASSWORD was set'
 else
-  echo 'DB_PASS was not set'
-  exit 1 # terminate and indicate error
-fi
-
-if [ -n "${DB_NAME}" ]; 
-then
-  echo 'DB_NAME was set'
-else
-  echo 'DB_NAME was not set'
-  exit 1 # terminate and indicate error
-fi
-
-if [ -n "${NR_USER}" ]; 
-then
-  echo 'NR_USER was set'
-else
-  echo 'NR_USER was not set'
-  exit 1 # terminate and indicate error
-fi
-
-if [ -n "${NR_PASS}" ]; 
-then
-  echo 'NR_PASS was set'
-else
-  echo 'NR_PASS was not set'
+  echo 'MONGO_INITDB_ROOT_PASSWORD was not set'
   exit 1 # terminate and indicate error
 fi
 

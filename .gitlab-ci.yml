@@ -21,14 +21,14 @@ build-thetrains:
   stage: build
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build --pull -t $THETRAINS_TEST_IMAGE thetrains/
+    - docker build -t $THETRAINS_TEST_IMAGE -f thetrains/Dockerfile .
     - docker push $THETRAINS_TEST_IMAGE
   
 build-collector:
   stage: build
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build --pull -t $COLLECTOR_TEST_IMAGE collector/
+    - docker build -t $COLLECTOR_TEST_IMAGE -f collector/Dockerfile .
     - docker push $COLLECTOR_TEST_IMAGE
 
 test:

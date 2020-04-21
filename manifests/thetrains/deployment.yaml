@@ -1,24 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: dash
+  name: thetrains
   namespace: thetrains
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: dash
+      app: thetrains
   template:
     metadata:
       labels:
-        app: dash
+        app: thetrains
     spec:
       containers:
-      - name: dash
-        image: registry.gitlab.com/joshtingey/thetrains/dash:latest
+      - name: thetrains
+        image: registry.gitlab.com/joshtingey/thetrains/thetrains:latest
         imagePullPolicy: "Always"
-        envFrom:
-          - configMapRef:
-              name: dash-config
         ports:
         - containerPort: 8000

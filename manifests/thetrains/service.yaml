@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: dash
+  name: thetrains
   namespace: thetrains
   labels:
-    app: dash
+    app: thetrains
 spec:
   selector:
-    app: dash
+    app: thetrains
   ports:
     - name: http
       port: 80

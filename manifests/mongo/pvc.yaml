@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata: 
-  name: postgres-pvc
+  name: mongo_pvc
   namespace: thetrains
   labels:
-    app: postgres
+    app: mongo
 spec: 
   accessModes: 
     - ReadWriteOnce

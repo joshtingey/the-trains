@@ -10,7 +10,7 @@ services:
     ports:
       - 27017:27017
     volumes:
-      - thetrains_mongo:/data/db
+      - mongo:/data/db
     
 volumes:
-  thetrains_mongo:
+  mongo:

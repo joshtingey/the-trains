@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo
+  namespace: thetrains
+  labels:
+    app: mongo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      containers:
+      - name: mongo
+        image: mongo:latest
+        envFrom:
+          - configMapRef:
+              name: mongo_config
+        ports:
+        - containerPort: 27017
+          name: mongo
+        volumeMounts:
+          - name: mongo_volume
+            mountPath: /data/db
+      volumes:
+        - name: mongo_volume
+          persistentVolumeClaim:
+            claimName: mongo_pvc

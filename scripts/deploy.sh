@@ -2,32 +2,14 @@
 
 echo "Deploying..."
 
-sed -i "s/<DB_USER>/${DB_USER}/g" ./manifests/database/config.yaml
-sed -i "s/<DB_PASS>/${DB_PASS}/g" ./manifests/database/config.yaml
-sed -i "s/<DB_NAME>/${DB_NAME}/g" ./manifests/database/config.yaml
-sed -i "s/<NR_USER>/${NR_USER}/g" ./manifests/collector/config.yaml
-sed -i "s/<NR_PASS>/${NR_PASS}/g" ./manifests/collector/config.yaml
-sed -i "s/<DB_USER>/${DB_USER}/g" ./manifests/collector/config.yaml
-sed -i "s/<DB_PASS>/${DB_PASS}/g" ./manifests/collector/config.yaml
-sed -i "s/<DB_NAME>/${DB_NAME}/g" ./manifests/collector/config.yaml
-sed -i "s/<DB_USER>/${DB_USER}/g" ./manifests/dash/config.yaml
-sed -i "s/<DB_PASS>/${DB_PASS}/g" ./manifests/dash/config.yaml
-sed -i "s/<DB_NAME>/${DB_NAME}/g" ./manifests/dash/config.yaml
+sed -i "s/<MONGO_INITDB_ROOT_USERNAME>/${MONGO_INITDB_ROOT_USERNAME}/g" ./manifests/mongo/config.yaml
+sed -i "s/<MONGO_INITDB_ROOT_PASSWORD>/${MONGO_INITDB_ROOT_PASSWORD}/g" ./manifests/mongo/config.yaml
 
-kubectl apply -f manifests/database
+kubectl apply -f manifests/mongo
 kubectl rollout restart deployment collector -n thetrains
-kubectl rollout restart deployment dash -n thetrains
+kubectl rollout restart deployment thetrains -n thetrains
 
-sed -i "s/${DB_USER}/<DB_USER>/g" ./manifests/database/config.yaml
-sed -i "s/${DB_PASS}/<DB_PASS>/g" ./manifests/database/config.yaml
-sed -i "s/${DB_NAME}/<DB_NAME>/g" ./manifests/database/config.yaml
-sed -i "s/${NR_USER}/<NR_USER>/g" ./manifests/collector/config.yaml
-sed -i "s/${NR_PASS}/<NR_PASS>/g" ./manifests/collector/config.yaml
-sed -i "s/${DB_USER}/<DB_USER>/g" ./manifests/collector/config.yaml
-sed -i "s/${DB_PASS}/<DB_PASS>/g" ./manifests/collector/config.yaml
-sed -i "s/${DB_NAME}/<DB_NAME>/g" ./manifests/collector/config.yaml
-sed -i "s/${DB_USER}/<DB_USER>/g" ./manifests/dash/config.yaml
-sed -i "s/${DB_PASS}/<DB_PASS>/g" ./manifests/dash/config.yaml
-sed -i "s/${DB_NAME}/<DB_NAME>/g" ./manifests/dash/config.yaml
+sed -i "s/${MONGO_INITDB_ROOT_USERNAME}/<MONGO_INITDB_ROOT_USERNAME>/g" ./manifests/mongo/config.yaml
+sed -i "s/${MONGO_INITDB_ROOT_PASSWORD}/<MONGO_INITDB_ROOT_PASSWORD>/g" ./manifests/mongo/config.yaml
 
 echo "DONE!"

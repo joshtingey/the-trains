@@ -5,13 +5,17 @@ build:
     sha256: {}
   # defines where to find the code at build time and where to push the resulting image
   artifacts:
-  - context: dash
-    image: registry.gitlab.com/joshtingey/thetrains/dash
-  - context: collector
+  - context: ./
+    docker:
+      dockerfile: ./thetrains/Dockerfile
+    image: registry.gitlab.com/joshtingey/thetrains/thetrains
+  - context: ./
+    docker:
+      dockerfile: ./collector/Dockerfile
     image: registry.gitlab.com/joshtingey/thetrains/collector
 # defines the Kubernetes manifests to deploy on each run
 deploy:
   kubectl:
     manifests:
-    - manifests/dash/*
+    - manifests/thetrains/*
     - manifests/collector/*

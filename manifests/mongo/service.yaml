@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: postgres
+  name: mongo
   namespace: thetrains
   labels:
-    app: postgres
+    app: mongo
 spec:
   type: NodePort
   ports:
-    - port: 5432
+    - port: 27017
   selector:
-    app: postgres
+    app: mongo

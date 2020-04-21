@@ -19,6 +19,7 @@ else
 fi
 
 export PYTHONPATH=$PYTHONPATH:$(pwd)
+alias thetrains="python manage.py"
 echo "thetrains env setup"
 cd $CURRENTDIR  # Go back to the user directory
 
