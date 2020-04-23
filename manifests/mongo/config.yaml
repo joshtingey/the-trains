@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: mongo_config
+  name: mongo-config
   namespace: thetrains
   labels:
     app: mongo
 data:
-  MONGO_INITDB_ROOT_USERNAME: <MONGO_INITDB_ROOT_USERNAME>
-  MONGO_INITDB_ROOT_PASSWORD: <MONGO_INITDB_ROOT_PASSWORD>
+  MONGO_INITDB_ROOT_USERNAME: mongo_user
+  MONGO_INITDB_ROOT_PASSWORD: mongo_pass

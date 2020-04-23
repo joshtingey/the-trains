@@ -1,21 +1,19 @@
-apiVersion: skaffold/v1beta15
+apiVersion: skaffold/v2beta2
 kind: Config
 build:
-  tagPolicy:
-    sha256: {}
-  # defines where to find the code at build time and where to push the resulting image
   artifacts:
-  - context: ./
+  - image: registry.gitlab.com/joshtingey/thetrains/thetrains
+    context: ./
     docker:
       dockerfile: ./thetrains/Dockerfile
-    image: registry.gitlab.com/joshtingey/thetrains/thetrains
-  - context: ./
+  - image: registry.gitlab.com/joshtingey/thetrains/collector
+    context: ./
     docker:
       dockerfile: ./collector/Dockerfile
-    image: registry.gitlab.com/joshtingey/thetrains/collector
-# defines the Kubernetes manifests to deploy on each run
+  tagPolicy:
+    sha256: {}
 deploy:
   kubectl:
     manifests:
-    - manifests/thetrains/*
-    - manifests/collector/*
+    - manifests/thetrains/deployment.yaml
+    - manifests/collector/deployment.yaml

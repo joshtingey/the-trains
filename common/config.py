@@ -28,8 +28,8 @@ class LocalConfig:
         MG_USER, MG_PASS, MG_HOST, MG_PORT
     )
 
-    NR_USER = config('NR_USER')
-    NR_PASS = config('NR_PASS')
+    NR_USER = config('NR_USER_DEV')
+    NR_PASS = config('NR_PASS_DEV')
     MAPBOX_TOKEN = config('MAPBOX_TOKEN')
 
     CONN_ATTEMPTS = config('CONN_ATTEMPTS', cast=int, default=5)
@@ -64,8 +64,44 @@ class DockerConfig:
         MG_USER, MG_PASS
     )
 
-    NR_USER = config('NR_USER')
-    NR_PASS = config('NR_PASS')
+    NR_USER = config('NR_USER_DEV')
+    NR_PASS = config('NR_PASS_DEV')
+    MAPBOX_TOKEN = config('MAPBOX_TOKEN')
+
+    CONN_ATTEMPTS = config('CONN_ATTEMPTS', cast=int, default=5)
+    PPM_FEED = config('PPM_FEED', cast=bool, default=False)
+    TD_FEED = config('TD_FEED', cast=bool, default=False)
+
+    @staticmethod
+    def init_logging(log):
+        """Initiates logging."""
+        log_level = logging.getLevelName(config(
+            "LOG_LEVEL", default='INFO'
+        ))
+        file_log = config("FILE_LOG", cast=bool, default=False)
+        log.setLevel(log_level)
+        client_logger.setLevel(log_level)
+        log.addHandler(client_logger)
+        if file_log:
+            file_logger.setLevel(log_level)
+            log.addHandler(file_logger)
+
+
+class ProdConfig:
+    """Initialise a configuration for use with docker"""
+
+    MG_USER = config(
+        'MONGO_INITDB_ROOT_USERNAME', default="mongo_user"
+    )
+    MG_PASS = config(
+        'MONGO_INITDB_ROOT_PASSWORD', default="mongo_pass"
+    )
+    MG_URI = 'mongodb://{}:{}@mongo:27017'.format(
+        MG_USER, MG_PASS
+    )
+
+    NR_USER = config('NR_USER_PROD')
+    NR_PASS = config('NR_PASS_PROD')
     MAPBOX_TOKEN = config('MAPBOX_TOKEN')
 
     CONN_ATTEMPTS = config('CONN_ATTEMPTS', cast=int, default=5)
@@ -92,4 +128,5 @@ class DockerConfig:
 config_dict = {
     'local': LocalConfig,
     'docker': DockerConfig,
+    'prod': ProdConfig
 }

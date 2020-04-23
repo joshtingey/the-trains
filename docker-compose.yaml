@@ -2,9 +2,19 @@ version: '3'
 
 services:
 
+  mongo:
+    container_name: mongo
+    restart: always
+    image: mongo:latest
+    env_file: .env
+    ports:
+      - 27017:27017
+    volumes:
+      - mongo:/data/db
+
   collector:
     container_name: collector
-    restart: always
+    restart: "no"
     build: 
       context: ./
       dockerfile: ./collector/Dockerfile
@@ -13,7 +23,7 @@ services:
 
   thetrains:
     container_name: thetrains
-    restart: always
+    restart: "no"
     build: 
       context: ./
       dockerfile: ./thetrains/Dockerfile
@@ -22,19 +32,5 @@ services:
     depends_on:
       - mongo
 
-  nginx:
-    container_name: nginx
-    restart: unless-stopped
-    build: ./nginx
-    ports:
-        - 80:80/tcp
-        - 443:443/tcp
-    environment:
-        CERTBOT_EMAIL: ${NR_USER}
-    volumes:
-      - letsencrypt:/etc/letsencrypt
-    depends_on:
-      - thetrains
-
 volumes:
-  letsencrypt:
+  mongo:

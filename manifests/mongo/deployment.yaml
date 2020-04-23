@@ -22,14 +22,14 @@ spec:
         image: mongo:latest
         envFrom:
           - configMapRef:
-              name: mongo_config
+              name: mongo-config
         ports:
         - containerPort: 27017
           name: mongo
         volumeMounts:
-          - name: mongo_volume
+          - name: mongo-volume
             mountPath: /data/db
       volumes:
-        - name: mongo_volume
+        - name: mongo-volume
           persistentVolumeClaim:
-            claimName: mongo_pvc
+            claimName: mongo-pvc

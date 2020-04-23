@@ -1,15 +1,19 @@
-db: 
-	docker-compose -f docker-compose.common.yml up --build -d
-
 dev:
-	docker-compose -f docker-compose.common.yml -f docker-compose.dev.yml up --build -d
-
-prod:
-	docker-compose -f docker-compose.common.yml -f docker-compose.prod.yml up --build -d
+	docker-compose up --build -d
 
 down:
-	docker-compose -f docker-compose.common.yml -f docker-compose.dev.yml -f docker-compose.prod.yml down
+	docker-compose down
+
+prod_setup:
+	kubectl apply -f manifests/setup/
+
+prod_build:
+	sudo skaffold build
+
+prod_deploy:
+	kubectl apply -f manifests/mongo/
+	kubectl apply -f manifests/collector/
+	kubectl apply -f manifests/thetrains/
 
 clean:
-	docker-compose down
-	docker system prune -fasudo 
+	docker system prune -a --volumes
