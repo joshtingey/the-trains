@@ -14,8 +14,7 @@ variables:
 
 stages:
   - build
-  - test  
-  - release
+  - test
 
 build-thetrains:
   stage: build
@@ -36,18 +35,18 @@ test:
   script:
     - source ./scripts/test.sh
 
-release-images:
-  stage: release
-  script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker pull $THETRAINS_TEST_IMAGE
-    - docker tag $THETRAINS_TEST_IMAGE $THETRAINS_RELEASE_IMAGE
-    - docker push $THETRAINS_RELEASE_IMAGE
-    - docker pull $COLLECTOR_TEST_IMAGE
-    - docker tag $COLLECTOR_TEST_IMAGE $COLLECTOR_RELEASE_IMAGE
-    - docker push $COLLECTOR_RELEASE_IMAGE
-  only:
-    - master
+#release-images:
+#  stage: release
+#  script:
+#    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+#    - docker pull $THETRAINS_TEST_IMAGE
+#    - docker tag $THETRAINS_TEST_IMAGE $THETRAINS_RELEASE_IMAGE
+#    - docker push $THETRAINS_RELEASE_IMAGE
+#    - docker pull $COLLECTOR_TEST_IMAGE
+#    - docker tag $COLLECTOR_TEST_IMAGE $COLLECTOR_RELEASE_IMAGE
+#    - docker push $COLLECTOR_RELEASE_IMAGE
+#  only:
+#    - master
 
 #deploy:
 #  stage: deploy
