@@ -1,126 +1,93 @@
-"""This is where we defined the Config files, which are used for initiating the
-application with specific settings such as logger configurations or different
-database setups."""
+# -*- coding: utf-8 -*-
+
+"""
+This module contains the configuration classes for the different deployment
+cases for thetrains app. All configs derived from the base 'Config' class.
+"""
 
 import logging
 
 from decouple import config
 
-from common.logging import file_logger, client_logger
+from common.logging import client_logger
 
 
-class LocalConfig:
-    """Initialise a configuration for use when locally running apps"""
-
+class Config(object):
+    """
+    Base config class with all common configuration variables and methods.
+    """
     MG_USER = config(
-        'MONGO_INITDB_ROOT_USERNAME', default="mongo_user"
+        'MONGO_INITDB_ROOT_USERNAME', default="mongo_username"
     )
     MG_PASS = config(
-        'MONGO_INITDB_ROOT_PASSWORD', default="mongo_pass"
-    )
-    MG_HOST = config(
-        'MONGO_HOST', default="localhost"
-    )
-    MG_PORT = config(
-        'MONGO_PORT', default="27017"
-    )
-    MG_URI = 'mongodb://{}:{}@{}:{}'.format(
-        MG_USER, MG_PASS, MG_HOST, MG_PORT
+        'MONGO_INITDB_ROOT_PASSWORD', default="mongo_password"
     )
 
-    NR_USER = config('NR_USER_DEV')
-    NR_PASS = config('NR_PASS_DEV')
     MAPBOX_TOKEN = config('MAPBOX_TOKEN')
-
     CONN_ATTEMPTS = config('CONN_ATTEMPTS', cast=int, default=5)
     PPM_FEED = config('PPM_FEED', cast=bool, default=False)
     TD_FEED = config('TD_FEED', cast=bool, default=False)
 
     @staticmethod
     def init_logging(log):
-        """Initiates logging."""
-        log_level = logging.getLevelName(config(
-            "LOG_LEVEL", default='INFO'
-        ))
-        file_log = config("FILE_LOG", cast=bool, default=False)
+        """
+        Initialise logging.
+
+        Args:
+            log (logging.logger): Logger to initialise
+        """
+        log_level = logging.getLevelName(config("LOG_LEVEL", default='INFO'))
         log.setLevel(log_level)
         client_logger.setLevel(log_level)
         log.addHandler(client_logger)
-        if file_log:
-            file_logger.setLevel(log_level)
-            log.addHandler(file_logger)
 
 
-class DockerConfig:
-    """Initialise a configuration for use with docker"""
+class LocalConfig(Config):
+    """
+    Configuration for use when natively running locally.
+    """
 
-    MG_USER = config(
-        'MONGO_INITDB_ROOT_USERNAME', default="mongo_user"
-    )
-    MG_PASS = config(
-        'MONGO_INITDB_ROOT_PASSWORD', default="mongo_pass"
-    )
-    MG_URI = 'mongodb://{}:{}@mongo:27017'.format(
-        MG_USER, MG_PASS
-    )
+    def __init__(self):
+        """
+        Initialise the LocalConfig.
+        """
+        super().__init__()
 
+    MG_URI = 'mongodb://{}:{}@localhost:27017'.format(MG_USER, MG_PASS)
     NR_USER = config('NR_USER_DEV')
     NR_PASS = config('NR_PASS_DEV')
-    MAPBOX_TOKEN = config('MAPBOX_TOKEN')
-
-    CONN_ATTEMPTS = config('CONN_ATTEMPTS', cast=int, default=5)
-    PPM_FEED = config('PPM_FEED', cast=bool, default=False)
-    TD_FEED = config('TD_FEED', cast=bool, default=False)
-
-    @staticmethod
-    def init_logging(log):
-        """Initiates logging."""
-        log_level = logging.getLevelName(config(
-            "LOG_LEVEL", default='INFO'
-        ))
-        file_log = config("FILE_LOG", cast=bool, default=False)
-        log.setLevel(log_level)
-        client_logger.setLevel(log_level)
-        log.addHandler(client_logger)
-        if file_log:
-            file_logger.setLevel(log_level)
-            log.addHandler(file_logger)
 
 
-class ProdConfig:
-    """Initialise a configuration for use with docker"""
+class DockerConfig(Config):
+    """
+    Configuration for use with running locally with docker.
+    """
 
-    MG_USER = config(
-        'MONGO_INITDB_ROOT_USERNAME', default="mongo_user"
-    )
-    MG_PASS = config(
-        'MONGO_INITDB_ROOT_PASSWORD', default="mongo_pass"
-    )
-    MG_URI = 'mongodb://{}:{}@mongo:27017'.format(
-        MG_USER, MG_PASS
-    )
+    def __init__(self):
+        """
+        Initialise the DockerConfig.
+        """
+        super().__init__()
 
+    MG_URI = 'mongodb://{}:{}@mongo:27017'.format(MG_USER, MG_PASS)
+    NR_USER = config('NR_USER_DEV')
+    NR_PASS = config('NR_PASS_DEV')
+
+
+class ProdConfig(Config):
+    """
+    Configuration for use when pushing to k8s production.
+    """
+
+    def __init__(self):
+        """
+        Initialise the ProdConfig.
+        """
+        super().__init__()
+
+    MG_URI = 'mongodb://{}:{}@mongo:27017'.format(MG_USER, MG_PASS)
     NR_USER = config('NR_USER_PROD')
     NR_PASS = config('NR_PASS_PROD')
-    MAPBOX_TOKEN = config('MAPBOX_TOKEN')
-
-    CONN_ATTEMPTS = config('CONN_ATTEMPTS', cast=int, default=5)
-    PPM_FEED = config('PPM_FEED', cast=bool, default=False)
-    TD_FEED = config('TD_FEED', cast=bool, default=False)
-
-    @staticmethod
-    def init_logging(log):
-        """Initiates logging."""
-        log_level = logging.getLevelName(config(
-            "LOG_LEVEL", default='INFO'
-        ))
-        file_log = config("FILE_LOG", cast=bool, default=False)
-        log.setLevel(log_level)
-        client_logger.setLevel(log_level)
-        log.addHandler(client_logger)
-        if file_log:
-            file_logger.setLevel(log_level)
-            log.addHandler(file_logger)
 
 
 # Create a config dictionary which is used while initiating the application.

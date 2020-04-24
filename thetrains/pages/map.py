@@ -6,6 +6,12 @@ from thetrains.app import app
 
 
 def body():
+    """
+    Get map page body.
+
+    Returns:
+        html.Div: Dash layout
+    """
     df = px.data.carshare()
     px.set_mapbox_access_token(app.server.config['MAPBOX_TOKEN'])
     fig = px.scatter_mapbox(df, lat="centroid_lat", lon="centroid_lon",

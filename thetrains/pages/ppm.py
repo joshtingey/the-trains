@@ -6,6 +6,12 @@ from thetrains.app import app
 
 
 def body():
+    """
+    Get ppm page body.
+
+    Returns:
+        html.Div: Dash layout
+    """
     df = app.mongo.get_ppm_df()
     body = html.Div([
         html.Button('Update', id='update-button'),
@@ -48,6 +54,12 @@ def body():
      Output('ppm-graph', 'figure')],
     [Input('update-button', 'n_clicks')])
 def update_graph(n_clicks):
+    """
+    Update the PPM graphs.
+
+    Args:
+        n_clicks (int): Number of times update clicked
+    """
     df = app.mongo.get_ppm_df()
     return [
         {

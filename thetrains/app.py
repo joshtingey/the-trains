@@ -10,7 +10,12 @@ from common.mongo import Mongo
 
 
 def create_flask():
-    """Create the Flask instance for this application"""
+    """
+    Create the Flask instance for this application.
+
+    Returns:
+        flask.Flask: Flask application
+    """
     server = Flask(__package__)
 
     # load default settings
@@ -21,8 +26,14 @@ def create_flask():
 
 
 def create_dash(server):
-    """Create the Dash instance for this application"""
+    """
+    Create the Dash instance for this application.
 
+    Args:
+        server (flask.Flask): Flask application
+    Returns:
+        dash.Dash: Dash application
+    """
     app = Dash(
         name=__package__,
         server=server,

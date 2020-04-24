@@ -10,13 +10,25 @@ from common.mongo import Mongo
 
 
 class Network(object):
-    """Network class for mapping the train network."""
+    """
+    Network class for mapping the train network.
+    """
+
     def __init__(self, log, mongo):
+        """
+        Initialise Network.
+
+        Args:
+            log (logging.logger): Logger to use
+            mongo (common.mongo.Mongo): Database class
+        """
         self.log = log
         self.mongo = mongo
 
     def run(self):
-        """Run the network generation."""
+        """
+        Run the network generation.
+        """
         G = nx.Graph()
 
         for movement in self.mongo.get("td"):
@@ -27,8 +39,9 @@ class Network(object):
 
 
 def main():
-    """Main function called when network is run standalone"""
-
+    """
+    Main function called when network is run standalone.
+    """
     log = logging.getLogger("network")
 
     conf = config_dict['local']

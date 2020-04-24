@@ -13,6 +13,14 @@ server = app.server
 
 
 def add_navbar(body):
+    """
+    Adds navbar to body
+
+    Args:
+        body (dash.layout): Dash layout
+    Returns:
+        dash.layout: Body with navbar
+    """
     navbar = dbc.NavbarSimple(
         children=[
             dbc.NavItem(dbc.NavLink("Home", href="/")),
@@ -35,6 +43,14 @@ app.layout = html.Div([
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname')])
 def display_page(pathname):
+    """
+    Displays the correct page for the URL
+
+    Args:
+        pathname (str): URL pathname
+    Returns:
+        dash.layout: Layout for page
+    """
     if pathname == '/':
         return add_navbar(home_page.body())
     elif pathname == '/ppm':

@@ -4,6 +4,12 @@ import dash_html_components as html
 
 
 def body():
+    """
+    Get homepage body.
+
+    Returns:
+        dbc.Container: Dash layout
+    """
     body = dbc.Container([
         dbc.Row([
             dbc.Col([

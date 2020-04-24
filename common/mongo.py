@@ -1,21 +1,39 @@
-"""This module provides all the methods to communicate with the databases.
-We definie a base database class which other specific database classes
-derive from. This abstracts away the mechanics of the database from the
-rest of the source code"""
+# -*- coding: utf-8 -*-
+
+"""
+This module provides all the methods to communicate with the mongo
+database. This abstracts away the mechanics of the database from the
+rest of the source code
+"""
 
 from pymongo import MongoClient
 import pandas as pd
 
 
 class Mongo(object):
-    """Class to handle MongoDB data flow"""
+    """
+    Class to handle MongoDB data flow.
+    """
+
     def __init__(self, log, uri):
+        """
+        Initialise Mongo.
+
+        Args:
+            log (logging.logger): Logger to use
+            uri (str): MongoDB connection string
+        """
         self.log = log  # We take the logger from the application
         self.client = None  # Mongo database
         self.init(uri)
 
     def init(self, uri):
-        """Initialise the MongoDB connection"""
+        """
+        Initialise the MongoDB connection.
+
+        Args:
+            uri (str): MongoDB connection string
+        """
         try:
             client = MongoClient(uri)
             self.client = client.thetrains
@@ -27,17 +45,34 @@ class Mongo(object):
             self.client = None
 
     def drop(self, name):
+        """
+        Drop a named collection.
+
+        Args:
+            name (str): collection name
+        """
         self.client.drop_collection(name)
 
     def add(self, collection, doc):
-        """Add a document to a collection"""
+        """
+        Add a document to a collection.
+
+        Args:
+            collection (str): collection name
+            doc (dict): document in dict format
+        """
         try:
             self.client[collection].insert_one(doc)
         except Exception as e:
             self.log.warning("Mongo error ({})".format(e))
 
     def get(self, collection):
-        """Get all documents from a collection"""
+        """
+        Get all documents from a collection.
+
+        Args:
+            collection (str): collection name
+        """
         try:
             return self.client[collection].find()
         except Exception as e:
@@ -45,6 +80,12 @@ class Mongo(object):
             return None
 
     def get_ppm_df(self):
+        """
+        Get a pandas dataframe containing all PPM data
+
+        Returns:
+            pd.DataFrame: PPM Pandas dataframe
+        """
         ppm_dict = {
             'date': [],
             'total': [],
