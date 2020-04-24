@@ -54,7 +54,9 @@ class StompFeed(object):
         self.mongo = mongo
 
     async def handle_message(self, message):
-        """Handle the JSON message"""
+        """
+        Handle the JSON message, overide in dervied classes
+        """
         raise NotImplementedError
 
 

@@ -53,7 +53,10 @@ class LocalConfig(Config):
         """
         super().__init__()
 
-    MG_URI = 'mongodb://{}:{}@localhost:27017'.format(MG_USER, MG_PASS)
+    MG_URI = 'mongodb://{}:{}@localhost:27017'.format(
+        Config.MG_USER,
+        Config.MG_PASS
+    )
     NR_USER = config('NR_USER_DEV')
     NR_PASS = config('NR_PASS_DEV')
 
@@ -69,7 +72,10 @@ class DockerConfig(Config):
         """
         super().__init__()
 
-    MG_URI = 'mongodb://{}:{}@mongo:27017'.format(MG_USER, MG_PASS)
+    MG_URI = 'mongodb://{}:{}@mongo:27017'.format(
+        Config.MG_USER,
+        Config.MG_PASS
+    )
     NR_USER = config('NR_USER_DEV')
     NR_PASS = config('NR_PASS_DEV')
 
@@ -85,7 +91,10 @@ class ProdConfig(Config):
         """
         super().__init__()
 
-    MG_URI = 'mongodb://{}:{}@mongo:27017'.format(MG_USER, MG_PASS)
+    MG_URI = 'mongodb://{}:{}@mongo:27017'.format(
+        Config.MG_USER,
+        Config.MG_PASS
+    )
     NR_USER = config('NR_USER_PROD')
     NR_PASS = config('NR_PASS_PROD')
 

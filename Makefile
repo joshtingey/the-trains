@@ -1,19 +1,27 @@
-dev:
+mongo_up:
+	sed -i "s/ENV=.*/ENV=local/g" .env
+	source ./deploy/local_mongo.sh
+
+mongo_down:
+	sed -i "s/ENV=.*/ENV=local/g" .env
+	docker stop mongo
+	docker container rm mongo
+
+docker_up:
+	sed -i "s/ENV=.*/ENV=docker/g" .env
 	docker-compose up --build -d
 
-down:
+docker_down:
+	sed -i "s/ENV=.*/ENV=docker/g" .env
 	docker-compose down
 
-prod_setup:
-	kubectl apply -f manifests/setup/
-
 prod_build:
-	sudo skaffold build
+	sed -i "s/ENV=.*/ENV=prod/g" .env
+	sudo skaffold build -f ./deploy/skaffold.yaml
 
 prod_deploy:
-	kubectl apply -f manifests/mongo/
-	kubectl apply -f manifests/collector/
-	kubectl apply -f manifests/thetrains/
+	sed -i "s/ENV=.*/ENV=prod/g" .env
+	./deploy/deploy.sh
 
 clean:
 	docker system prune -a --volumes
