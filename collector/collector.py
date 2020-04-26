@@ -215,8 +215,6 @@ class STOMPCollector(object):
                 heartbeats=(100000, 100000)
             )
             self.conn.set_listener('handler', self)  # Register self
-            # self.conn.set_listener('stats', stomp.StatsListener())
-            # self.conn.set_listener('print', stomp.PrintingListener())
         except Exception as e:
             log.warning("STOMP setup error ({}), continue anyway".format(e))
             self.conn = None
@@ -252,6 +250,7 @@ class STOMPCollector(object):
             time.sleep(pow(attempt, 2))  # Exponential backoff in wait
 
             try:  # Attempt STOMP connection to Network Rail
+                log.info("Using {}:{}".format(self.nr_user, self.nr_pass))
                 if self.conn is not None:
                     self.conn.connect(
                         username=self.nr_user,

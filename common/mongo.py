@@ -95,6 +95,10 @@ class Mongo(object):
             'rolling_ppm': []
         }
 
+        docs = self.get("ppm")
+        if docs is None:
+            return None
+
         for doc in self.get("ppm"):
             ppm_dict['date'].append(doc['date'])
             ppm_dict['total'].append(doc['total'])

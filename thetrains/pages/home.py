@@ -1,6 +1,8 @@
-import dash_bootstrap_components as dbc
+# -*- coding: utf-8 -*-
+
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_bootstrap_components as dbc
 
 
 def body():
@@ -12,16 +14,22 @@ def body():
     """
     body = dbc.Container([
         dbc.Row([
-            dbc.Col([
-                html.H2("Heading"),
-                html.P("hello hello hello")
-            ], md=4,),
-            dbc.Col([
-                html.H2("Graph"),
-                dcc.Graph(
-                    figure={"data": [{"x": [1, 2, 3], "y": [1, 4, 9]}]}
-                ),
-            ]),
+            dbc.Col(
+                [
+                    html.H2("Pages"),
+                    html.P("PPM, Map")
+                ],
+                width=4
+            ),
+            dbc.Col(
+                [
+                    html.H2("Graph"),
+                    dcc.Graph(
+                        figure={"data": [{"x": [1, 2, 3], "y": [1, 4, 9]}]}
+                    ),
+                ],
+                width=8
+            ),
         ])
-    ], className="mt-4")
+    ])
     return body
