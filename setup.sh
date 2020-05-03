@@ -15,11 +15,14 @@ else
     pip install -r common/requirements.txt
     pip install -r dash/requirements.txt
     pip install -r collector/requirements.txt
-    pip install flake8 autopep8  # Linting and formatting tools
 fi
 
+# To make tests pass we export dummy deployment environment variables
+export K8S_SERVER='dummy'
+export K8S_CERTIFICATE='dummy'
+export K8S_TOKEN='dummy'
+
 export PYTHONPATH=$PYTHONPATH:$(pwd)
-alias thetrains="python manage.py"
 echo "thetrains env setup"
 cd $CURRENTDIR  # Go back to the user directory
 
