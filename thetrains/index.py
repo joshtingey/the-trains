@@ -6,7 +6,6 @@ import dash_bootstrap_components as dbc
 from thetrains.app import app
 import thetrains.pages.home as home_page
 import thetrains.pages.ppm as ppm_page
-import thetrains.pages.map as map_page
 
 
 server = app.server
@@ -25,7 +24,6 @@ def add_navbar(body):
         children=[
             dbc.NavItem(dbc.NavLink("Home", href="/")),
             dbc.NavItem(dbc.NavLink("PPM", href="/ppm")),
-            dbc.NavItem(dbc.NavLink("Map", href="/map")),
         ],
         brand="thetrains",
         brand_href="/",
@@ -55,8 +53,6 @@ def display_page(pathname):
         return add_navbar(home_page.body())
     elif pathname == '/ppm':
         return add_navbar(ppm_page.body())
-    elif pathname == '/map':
-        return add_navbar(map_page.body())
     else:
         return '404'
 

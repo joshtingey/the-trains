@@ -1,35 +1,60 @@
 # -*- coding: utf-8 -*-
 
 import dash_core_components as dcc
-import dash_html_components as html
 import dash_bootstrap_components as dbc
+import plotly.graph_objects as go
+
+from thetrains.app import app
 
 
 def body():
     """
-    Get homepage body.
+    Get map page body.
 
     Returns:
-        dbc.Container: Dash layout
+        html.Div: Dash layout
     """
+    edges = app.graph.edges
+    graph_map = go.Figure(go.Scattermapbox(
+        mode="lines",
+        lat=edges['lat'].tolist(),
+        lon=edges['lon'].tolist(),
+        line=dict(width=0.5, color='#888'),
+        hoverinfo='none'
+    ))
+
+    nodes = app.graph.nodes
+    graph_map.add_trace(go.Scattermapbox(
+        mode="markers",
+        lat=nodes['lat'].tolist(),
+        lon=nodes['lon'].tolist(),
+        marker=go.scattermapbox.Marker(size=9),
+        hovertext=nodes['name'].tolist(),
+        hoverinfo='text'
+    ))
+
+    graph_map.update_layout(
+        autosize=True,
+        height=800,
+        hovermode='closest',
+        showlegend=False,
+        mapbox=dict(
+            accesstoken=app.server.config['MAPBOX_TOKEN'],
+            style='streets', pitch=0, zoom=10,
+            center=go.layout.mapbox.Center(lat=53.4771, lon=-2.2297)
+        ),
+    )
+
     body = dbc.Container([
-        dbc.Row([
+        dbc.Row(
             dbc.Col(
-                [
-                    html.H2("Pages"),
-                    html.P("PPM, Map")
-                ],
-                width=4
-            ),
-            dbc.Col(
-                [
-                    html.H2("Graph"),
-                    dcc.Graph(
-                        figure={"data": [{"x": [1, 2, 3], "y": [1, 4, 9]}]}
-                    ),
-                ],
-                width=8
-            ),
-        ])
-    ])
+                dcc.Graph(figure=graph_map)
+            )
+        ),
+        dcc.Interval(
+            id='home-interval',
+            interval=1*10000,  # in milliseconds
+            n_intervals=0
+        )
+    ], fluid=True)
     return body

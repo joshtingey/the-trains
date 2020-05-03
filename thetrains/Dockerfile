@@ -16,4 +16,4 @@ COPY ./thetrains/pages/ ./thetrains/pages/
 
 EXPOSE 8000
 
-ENTRYPOINT ["gunicorn", "-w", "1", "-b", ":8000", "thetrains.index:server"]
+ENTRYPOINT ["gunicorn", "-w", "4", "-b", ":8000", "thetrains.index:server"]

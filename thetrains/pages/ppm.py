@@ -3,7 +3,6 @@
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output
 
 from thetrains.app import app
 
@@ -62,21 +61,9 @@ def body():
             )
         ),
         dcc.Interval(
-            id='interval-component',
-            interval=1*10000, # in milliseconds
+            id='ppm-interval',
+            interval=1*10000,  # in milliseconds
             n_intervals=0
         )
-    ])
+    ], fluid=True)
     return body
-
-
-@app.callback(Output('live-update-text', 'children'),
-              [Input('interval-component', 'n_intervals')])
-def update_graph(n):
-    """
-    Update the PPM graphs.
-
-    Args:
-        n (int): Number of updates
-    """
-    return body()

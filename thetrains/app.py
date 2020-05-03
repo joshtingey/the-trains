@@ -7,7 +7,7 @@ import dash_bootstrap_components as dbc
 
 from common.config import config_dict
 from common.mongo import Mongo
-from thetrains.network import Network
+from thetrains.graph import Graph
 
 
 def create_flask():
@@ -39,7 +39,7 @@ def create_dash(server):
         name=__package__,
         server=server,
         suppress_callback_exceptions=True,
-        external_stylesheets=[dbc.themes.FLATLY]
+        external_stylesheets=[dbc.themes.LUX]
     )
 
     # Initialise logging
@@ -50,8 +50,8 @@ def create_dash(server):
     # Initialise the mongo database
     app.mongo = Mongo(app.logger, app.server.config['MG_URI'])
 
-    # Initialise the network
-    app.network = Network(app.logger, app.mongo)
+    # Initialise the graph
+    app.graph = Graph(app.logger, app.mongo)
 
     # Update the Flask config a default "TITLE" and then with any new Dash
     # configuration parameters that might have been updated so that we can
