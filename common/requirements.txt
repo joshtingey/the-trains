@@ -2,3 +2,5 @@ python-decouple
 pymongo
 Flask-Script
 pandas
+pytest
+flake8
