@@ -1,51 +1,64 @@
 # .gitlab-ci.yml
-image: docker:19.03.1
-
-services:
-  - docker:19.03.1-dind
-
-#variables:
-#  DOCKER_HOST: tcp://docker:2376
-#  DOCKER_TLS_CERTDIR: "/certs"
-#  THETRAINS_TEST_IMAGE: $CI_REGISTRY_IMAGE/thetrains:latest-build
-#  COLLECTOR_TEST_IMAGE: $CI_REGISTRY_IMAGE/collector:latest-build
-#  THETRAINS_RELEASE_IMAGE: $CI_REGISTRY_IMAGE/thetrains:latest
-#  COLLECTOR_RELEASE_IMAGE: $CI_REGISTRY_IMAGE/collector:latest
 
 stages:
+  - static
   - test
+  - release
+  #- deploy
 
-#build-thetrains:
-#  stage: build
-#  script:
-#    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-#    - docker build -t $THETRAINS_TEST_IMAGE -f thetrains/Dockerfile .
-#    - docker push $THETRAINS_TEST_IMAGE
-  
-#build-collector:
-#  stage: build
-#  script:
-#    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-#    - docker build -t $COLLECTOR_TEST_IMAGE -f collector/Dockerfile .
-#    - docker push $COLLECTOR_TEST_IMAGE
-
-test:
-  stage: test
+flake8:
+  stage: static
+  image: python:latest
   script:
-    - source ./deploy/test.sh
+    - pip install -r common/requirements.txt
+    - pip install -r dash/requirements.txt
+    - pip install -r collector/requirements.txt
+    - flake8 --max-line-length=120 ./common/
+    - flake8 --max-line-length=120 ./collector/
+    - flake8 --max-line-length=120 ./thetrains/
+    - flake8 --max-line-length=120 ./test/
 
-#release-images:
-#  stage: release
-#  script:
-#    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-#    - docker pull $THETRAINS_TEST_IMAGE
-#    - docker tag $THETRAINS_TEST_IMAGE $THETRAINS_RELEASE_IMAGE
-#    - docker push $THETRAINS_RELEASE_IMAGE
-#    - docker pull $COLLECTOR_TEST_IMAGE
-#    - docker tag $COLLECTOR_TEST_IMAGE $COLLECTOR_RELEASE_IMAGE
-#    - docker push $COLLECTOR_RELEASE_IMAGE
-#  only:
-#    - master
+pytest:
+  stage: test
+  image: python:latest
+  script:
+    - pip install -r common/requirements.txt
+    - pip install -r dash/requirements.txt
+    - pip install -r collector/requirements.txt
+    - export PYTHONPATH=$PYTHONPATH:$(pwd)
+    - pytest
+
+release-thetrains:
+  stage: release
+  image: docker:19.03.1
+  services:
+    - docker:19.03.1-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    THETRAINS_IMAGE: $CI_REGISTRY_IMAGE/thetrains:latest
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $THETRAINS_IMAGE -f thetrains/Dockerfile .
+    - docker push $THETRAINS_IMAGE
+  only:
+    - master
+  
+release-collector:
+  stage: release
+  image: docker:19.03.1
+  services:
+    - docker:19.03.1-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    COLLECTOR_IMAGE: $CI_REGISTRY_IMAGE/collector:latest
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $COLLECTOR_IMAGE -f collector/Dockerfile .
+    - docker push $COLLECTOR_IMAGE
+  only:
+    - master
 
 #deploy:
 #  stage: deploy
@@ -54,11 +67,7 @@ test:
 #    name: production
 #    url: https://thetrains.co.uk/
 #  script:
-#    - kubectl config set-cluster k8s --server="${SERVER}"
-#    - kubectl config set clusters.k8s.certificate-authority-data ${CERTIFICATE_AUTHORITY_DATA}
-#    - kubectl config set-credentials gitlab --token="${USER_TOKEN}"
-#    - kubectl config set-context default --cluster=k8s --user=gitlab
-#    - kubectl config use-context default
+#    - echo 'DEPLOYING'
 #    - source ./scripts/deploy.sh
 #  only:
 #    - master

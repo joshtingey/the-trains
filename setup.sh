@@ -21,6 +21,10 @@ fi
 export K8S_SERVER='dummy'
 export K8S_CERTIFICATE='dummy'
 export K8S_TOKEN='dummy'
+export CERT_EMAIL='dummy'
+export DOMAIN='dummy'
+export MONGO_INITDB_ROOT_USERNAME='dummy'
+export MONGO_INITDB_ROOT_PASSWORD='dummy'
 
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 echo "thetrains env setup"
