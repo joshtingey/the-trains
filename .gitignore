@@ -1,4 +1,4 @@
 .vscode
-thetrains_env/
+thetrainsenv/
 **/__pycache__/
 logs/log.out

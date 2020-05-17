@@ -1,2 +1,2 @@
-stomp.py
-orjson
+stomp.py==6.0.0
+orjson==3.0.0

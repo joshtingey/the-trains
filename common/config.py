@@ -17,10 +17,10 @@ class Config(object):
     Base config class with all common configuration variables and methods.
     """
     MG_USER = config(
-        'MONGO_INITDB_ROOT_USERNAME', default="mongo_username"
+        'MONGO_INITDB_ROOT_USERNAME', default="mongo_db_user"
     )
     MG_PASS = config(
-        'MONGO_INITDB_ROOT_PASSWORD', default="mongo_password"
+        'MONGO_INITDB_ROOT_PASSWORD', default="mongo_db_pass"
     )
 
     MAPBOX_TOKEN = config('MAPBOX_TOKEN')
