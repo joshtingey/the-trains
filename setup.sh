@@ -7,15 +7,14 @@ CURRENTDIR=$(pwd)
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd $DIR
 
-if [ -d "thetrainsenv/" ]
+if [ -d ".venv/" ]
 then
-    echo "${C_BLUE}INFO:${C_RESET}    Activating thetrains python environment"
-    source thetrainsenv/bin/activate
+    echo "${C_BLUE}INFO:${C_RESET}    Activating python environment"
+    source .venv/bin/activate
 else
-    echo "${C_BLUE}INFO:${C_RESET}    Creating thetrains python environment"
-    sudo apt install python3-dev python3-pip python3-venv
-    python3 -m venv thetrainsenv
-    source thetrainsenv/bin/activate
+    echo "${C_BLUE}INFO:${C_RESET}    Creating python environment"
+    python3 -m venv .venv
+    source .venv/bin/activate
     pip install -r requirements.txt -r common/requirements.txt -r thetrains/requirements.txt -r collector/requirements.txt
 fi
 
