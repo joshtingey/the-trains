@@ -51,6 +51,7 @@ def create_dash(server):
     app.mongo = Mongo(app.logger, app.server.config['MG_URI'])
 
     # Initialise the graph
+    # TODO: periodically update the graph with any new data
     app.graph = Graph(app.logger, app.mongo)
 
     # Update the Flask config a default "TITLE" and then with any new Dash

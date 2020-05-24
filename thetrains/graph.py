@@ -83,11 +83,12 @@ class Graph(object):
         Returns:
             pd.DataFrame: DataFrame of node date
         """
-        lat, lon = [], []
+        names, lat, lon = [], [], []
         for node in self.graph.nodes():
+            names.append(node)
             lat.append(self.graph.nodes[node]['lat'])
             lon.append(self.graph.nodes[node]['lon'])
-        return pd.DataFrame({'name': node, 'lat': lat, 'lon': lon})
+        return pd.DataFrame({'name': names, 'lat': lat, 'lon': lon})
 
     @property
     def edges(self):
