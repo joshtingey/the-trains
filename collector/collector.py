@@ -88,14 +88,7 @@ class PPMFeed(StompFeed):
             "rolling_ppm": float(nat["NationalPPM"]["RollingPPM"]["text"])
         }
 
-        log.debug("{}: ({},{},{}), ({},{})".format(
-            doc["date"].strftime("%Y-%m-%d %H:%M:%S"),
-            doc["total"],
-            doc["on_time"],
-            doc["late"],
-            doc["ppm"],
-            doc["rolling_ppm"]
-        ))
+        log.debug("{}\n".format(doc))
 
         if self.mongo is not None:
             self.mongo.add("ppm", doc)
@@ -136,11 +129,7 @@ class TDFeed(StompFeed):
                         "to": str(msg["area_id"] + msg["to"])
                     }
 
-                    log.debug("time: {}, from: {}, to: {}".format(
-                        doc["date"].strftime("%Y-%m-%d %H:%M:%S"),
-                        doc["from"],
-                        doc["to"]
-                    ))
+                    log.debug("{}\n".format(doc))
 
                     if self.mongo is not None:
                         self.mongo.add("td", doc)
