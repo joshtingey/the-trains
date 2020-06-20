@@ -1,6 +1,6 @@
 mongo_up:
 	sed -i "s/ENV=.*/ENV=local/g" .env
-	source ./deploy/local_mongo.sh
+	./deploy/local_mongo.sh
 
 mongo_down:
 	sed -i "s/ENV=.*/ENV=local/g" .env
@@ -22,6 +22,13 @@ prod_build:
 prod_deploy:
 	sed -i "s/ENV=.*/ENV=prod/g" .env
 	./deploy/deploy.sh
+
+test:
+	flake8 --max-line-length=99 ./common/
+	flake8 --max-line-length=99 ./collector/
+	flake8 --max-line-length=99 ./thetrains/
+	flake8 --max-line-length=99 ./tests/
+	pytest
 
 clean:
 	docker system prune -a --volumes

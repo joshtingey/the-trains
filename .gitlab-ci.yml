@@ -16,7 +16,7 @@ flake8:
     - flake8 --max-line-length=120 ./common/
     - flake8 --max-line-length=120 ./collector/
     - flake8 --max-line-length=120 ./thetrains/
-    - flake8 --max-line-length=120 ./test/
+    - flake8 --max-line-length=120 ./tests/
 
 pytest:
   stage: test
@@ -43,7 +43,7 @@ release-thetrains:
     - docker push $THETRAINS_IMAGE
   only:
     - master
-  
+
 release-collector:
   stage: release
   image: docker:19.03.1
@@ -59,7 +59,6 @@ release-collector:
     - docker push $COLLECTOR_IMAGE
   only:
     - master
-
 #deploy:
 #  stage: deploy
 #  image: dtzar/helm-kubectl
