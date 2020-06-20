@@ -4,8 +4,14 @@ import common.config
 
 
 def check_base_attributes(config):
-    attributes = ['MG_USER', 'MG_PASS', 'MAPBOX_TOKEN', 'CONN_ATTEMPTS',
-                  'PPM_FEED', 'TD_FEED']
+    attributes = [
+        "MG_USER",
+        "MG_PASS",
+        "MAPBOX_TOKEN",
+        "CONN_ATTEMPTS",
+        "PPM_FEED",
+        "TD_FEED",
+    ]
     types = [str, str, str, int, bool, bool]
     errors = []
     for i, attribute in enumerate(attributes):
@@ -18,7 +24,7 @@ def check_base_attributes(config):
 
 
 def check_extra_attributes(config):
-    attributes = ['MG_URI', 'NR_USER', 'NR_PASS']
+    attributes = ["MG_URI", "NR_USER", "NR_PASS"]
     types = [str, str, str]
     errors = []
     for i, attribute in enumerate(attributes):
@@ -54,12 +60,12 @@ def test_prod_attributes():
 
 
 def test_logging_handlers():
-    test_logger = logging.getLogger('test_logger')
+    test_logger = logging.getLogger("test_logger")
     common.config.Config.init_logging(test_logger)
     assert len(test_logger.handlers) == 1
 
 
 def test_logging_level():
-    test_logger = logging.getLogger('test_logger')
+    test_logger = logging.getLogger("test_logger")
     common.config.Config.init_logging(test_logger)
     assert test_logger.level in [logging.DEBUG, logging.INFO, logging.WARNING]

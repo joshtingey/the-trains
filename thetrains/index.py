@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+
+"""Module to initialise the multipage dash application."""
+
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
@@ -12,13 +16,12 @@ server = app.server
 
 
 def add_navbar(body):
-    """
-    Adds navbar to body
+    """Add navbar to body.
 
     Args:
-        body (dash.layout): Dash layout
+        body (dash.layout): dash layout
     Returns:
-        dash.layout: Body with navbar
+        dash.layout: body with navbar
     """
     navbar = dbc.NavbarSimple(
         children=[
@@ -40,13 +43,12 @@ app.layout = html.Div(
 
 @app.callback(Output("page-content", "children"), [Input("url", "pathname")])
 def display_page(pathname):
-    """
-    Displays the correct page for the URL
+    """Display the correct page for the URL.
 
     Args:
         pathname (str): URL pathname
     Returns:
-        dash.layout: Layout for page
+        dash.layout: layout for page
     """
     if pathname == "/":
         return add_navbar(home_page.body())

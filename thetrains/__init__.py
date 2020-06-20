@@ -1,3 +1,1 @@
-"""
-This package contains the main 'thetrains' Dash(Flask) application
-"""
+"""This package contains the main 'thetrains' Dash(Flask) application."""

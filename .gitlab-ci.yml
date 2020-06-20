@@ -1,24 +1,11 @@
 # .gitlab-ci.yml
 
 stages:
-  - static
   - test
   - release
   #- deploy
 
-flake8:
-  stage: static
-  image: python:latest
-  script:
-    - pip install -r common/requirements.txt
-    - pip install -r thetrains/requirements.txt
-    - pip install -r collector/requirements.txt
-    - flake8 --max-line-length=120 ./common/
-    - flake8 --max-line-length=120 ./collector/
-    - flake8 --max-line-length=120 ./thetrains/
-    - flake8 --max-line-length=120 ./tests/
-
-pytest:
+test:
   stage: test
   image: python:latest
   script:
@@ -26,7 +13,7 @@ pytest:
     - pip install -r thetrains/requirements.txt
     - pip install -r collector/requirements.txt
     - export PYTHONPATH=$PYTHONPATH:$(pwd)
-    - pytest
+    - make test
 
 release-thetrains:
   stage: release

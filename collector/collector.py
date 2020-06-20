@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-"""
-This module collects data from the national rail STOMP feeds. The
-STOMPCollector class acts as the main connection handler while Feed
-classes deal with handling individual messages.
+"""This module collects data from the national rail STOMP feeds.
+
+The STOMPCollector class acts as the main connection handler while
+feed classes deal with handling individual messages.
 """
 
 import sys
@@ -26,8 +26,7 @@ log = logging.getLogger("collector")
 
 
 class Feeds(enum.Enum):
-    """Enumeration detailing the feed implementations.
-    """
+    """Enumeration detailing the feed implementations."""
 
     PPM = 0
     TD = 1
@@ -35,43 +34,43 @@ class Feeds(enum.Enum):
 
 
 class StompFeed(object):
-    """Base feed handling class, which all others derive from.
-    """
+    """Base feed handling class, which all others derive from."""
 
     def __init__(self, topic, durable, mongo):
         """Initialise the StompFeed.
+
         Args:
             name (int): "Feeds" enumeration number
             topic (str): NR topic string
-            durable (str): Durable connection name
-            mongo (common.mongo.Mongo): Database class
+            durable (str): durable connection name
+            mongo (common.mongo.Mongo): database class
         """
         self.topic = topic
         self.durable = durable
         self.mongo = mongo
 
     async def handle_message(self, message):
-        """Handle the JSON message, override in derived classes
-        """
+        """Handle the JSON message, override in derived classes."""
         raise NotImplementedError
 
 
 class PPMFeed(StompFeed):
     """Public performance metric feed handling class.
+
     The implementation follows the info available on the openraildata wiki at,
     https://wiki.openraildata.com/index.php?title=RTPPM
     """
 
     def __init__(self, mongo):
         """Initialise the PPMFeed.
+
         Args:
-            mongo (common.mongo.Mongo): Database class
+            mongo (common.mongo.Mongo): database class
         """
         super().__init__("/topic/RTPPM_ALL", "thetrains-ppm", mongo)
 
     async def handle_message(self, message):
-        """Handle the PPM JSON message.
-        """
+        """Handle the PPM JSON message."""
         try:
             parsed = orjson.loads(message)
         except orjson.JSONDecodeError:
@@ -97,6 +96,7 @@ class PPMFeed(StompFeed):
 
 class TDFeed(StompFeed):
     """Train describer feed handling class.
+
     The implementation follows the info available on the openraildata wiki at,
     https://wiki.openraildata.com/index.php?title=TD
 
@@ -123,15 +123,15 @@ class TDFeed(StompFeed):
 
     def __init__(self, mongo):
         """Initialise the TDFeed.
+
         Args:
-            mongo (common.mongo.Mongo): Database class
+            mongo (common.mongo.Mongo): database class
         """
         # TODO: Get a list of TD signal area topics to follow, should be all!
         super().__init__("/topic/TD_LNW_C_SIG_AREA", "thetrains-td", mongo)
 
     async def handle_message(self, message):
-        """Handle the TD JSON message.
-        """
+        """Handle the TD JSON message."""
         try:
             parsed = orjson.loads(message)
         except orjson.JSONDecodeError:
@@ -169,20 +169,21 @@ class TDFeed(StompFeed):
 
 class TMFeed(StompFeed):
     """Train movement feed handling class.
+
     The implementation follows the info available on the openraildata wiki at,
     https://wiki.openraildata.com/index.php?title=Train_Movements
     """
 
     def __init__(self, mongo):
         """Initialise the TMFeed.
+
         Args:
-            mongo (common.mongo.Mongo): Database class
+            mongo (common.mongo.Mongo): database class
         """
         super().__init__("/topic/TRAIN_MVT_ED_TOC", "thetrains-tm", mongo)
 
     async def handle_message(self, message):
-        """Handle the TD JSON message.
-        """
+        """Handle the TD JSON message."""
         try:
             parsed = orjson.loads(message)
         except orjson.JSONDecodeError:
@@ -221,11 +222,12 @@ class TMFeed(StompFeed):
 
 def get_feed(feed, mongo):
     """Get the feed handling class.
+
     Args:
         feed: "Feeds" enumeration number
-        mongo (common.mongo.Mongo): Database class
+        mongo (common.mongo.Mongo): database class
     Returns:
-        StompFeed: Feed handler class
+        StompFeed: feed handler class
     """
     if feed is Feeds.PPM:
         return PPMFeed(mongo)
@@ -240,6 +242,7 @@ def get_feed(feed, mongo):
 
 class STOMPCollector(object):
     """STOMP collector class handles the connection and topic subscription.
+
     Uses the stomp.py package for implementing the STOMP protocol, found at
     http://jasonrbriggs.github.io/stomp.py/index.html. Follows and then builds upon
     https://wiki.openraildata.com/index.php?title=Python_Examples and implements a
@@ -249,9 +252,10 @@ class STOMPCollector(object):
 
     def __init__(self, mongo, config):
         """Initialise the STOMPCollector.
+
         Args:
-            mongo (common.mongo.Mongo): Database class
-            config (common.config.Config): Configuration class
+            mongo (common.mongo.Mongo): database class
+            config (common.config.Config): configuration class
         """
         self.mongo = mongo  # Mongo database
         self.conn = None  # STOMP connection
@@ -277,8 +281,7 @@ class STOMPCollector(object):
         signal.signal(signal.SIGTERM, self.exit_handler)
 
     def connect_and_subscribe(self):
-        """Connect and resubscribe to all current feeds.
-        """
+        """Connect and resubscribe to all current feeds."""
         self.connect()
         for feed in self.feeds.keys():
             try:  # Attempt to subscribe to the feed
@@ -293,8 +296,7 @@ class STOMPCollector(object):
                 log.error("STOMP subscription error ({})".format(e))
 
     def connect(self):
-        """Connect to the Network Rail STOMP Server.
-        """
+        """Connect to the Network Rail STOMP Server."""
         for attempt in range(self.attempts):
             log.info("STOMP connection attempt: {}".format(attempt + 1))
             time.sleep(pow(attempt, 2))  # Exponential backoff in wait
@@ -323,6 +325,7 @@ class STOMPCollector(object):
 
     def subscribe(self, name):
         """Subscribe to a Network Rail STOMP feed.
+
         Args:
             name (int): "Feeds" enumeration number
         """
@@ -346,8 +349,7 @@ class STOMPCollector(object):
                 log.error("STOMP subscription error ({})".format(e))
 
     def unsubscribe(self, name):
-        """Unsubscribe from a Network Rail STOMP feed.
-        """
+        """Unsubscribe from a Network Rail STOMP feed."""
         if name in self.feeds:
             try:
                 self.conn.unsubscribe(self.feeds[name].durable)
@@ -360,8 +362,7 @@ class STOMPCollector(object):
             log.warning("No feed with that name")
 
     def on_message(self, headers, message):
-        """STOMP on_message handler.
-        """
+        """STOMP on_message handler."""
         log.debug("Got message")
         self.conn.ack(id=headers["message-id"], subscription=headers["subscription"])
 
@@ -371,30 +372,27 @@ class STOMPCollector(object):
                 return
 
     def on_error(self, headers, message):
-        """STOMP on_error handler.
-        """
+        """STOMP on_error handler."""
         log.error("STOMP connection error '{}'".format(message))
         self.exit()
 
     def on_disconnected(self):
-        """STOMP on_disconnected handler.
-        """
+        """STOMP on_disconnected handler."""
         log.error("STOMP connection disconnect")
         self.exit()
 
     def on_heartbeat_timeout(self):
-        """STOMP on_heartbeat_timeout handler.
-        """
+        """STOMP on_heartbeat_timeout handler."""
         log.error("STOMP connection heartbeat timeout")
         self.exit()
 
     def exit_handler(self, sig, frame):
-        """Signal exit handler to close connections and exit.
-        """
+        """Signal exit handler."""
         log.info("Exit signal handler invoked({})".format(sig))
         self.exit()
 
     def exit(self):
+        """Exit method to close connections and exit."""
         if self.conn.is_connected():
             for feed in self.feeds.keys():
                 self.conn.unsubscribe(self.feeds[feed].durable)
@@ -405,8 +403,7 @@ class STOMPCollector(object):
 
 
 def main():
-    """Main function called when collector starts.
-    """
+    """Call when collector starts."""
     conf = config_dict[config("ENV", cast=str, default="local")]
     conf.init_logging(log)
 

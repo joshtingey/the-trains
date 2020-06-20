@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""
-This module contains the configuration classes for the different deployment
-cases for thetrains app. All configs derived from the base 'Config' class.
-"""
+"""Module containing configuration classes for the different deployment cases."""
 
 import logging
 
@@ -13,9 +10,7 @@ from common.logging import client_logger
 
 
 class Config(object):
-    """
-    Base config class with all common configuration variables and methods.
-    """
+    """Base config class with all common configuration variables and methods."""
 
     MG_USER = config("MONGO_INITDB_ROOT_USERNAME", default="mongo_db_user")
     MG_PASS = config("MONGO_INITDB_ROOT_PASSWORD", default="mongo_db_pass")
@@ -28,11 +23,10 @@ class Config(object):
 
     @staticmethod
     def init_logging(log):
-        """
-        Initialise logging.
+        """Initialise logging.
 
         Args:
-            log (logging.logger): Logger to initialise
+            log (logging.logger): logger to initialise
         """
         log_level = logging.getLevelName(config("LOG_LEVEL", default="INFO"))
         log.setLevel(log_level)
@@ -41,14 +35,10 @@ class Config(object):
 
 
 class LocalConfig(Config):
-    """
-    Configuration for use when natively running locally.
-    """
+    """Configuration for use when natively running locally."""
 
     def __init__(self):
-        """
-        Initialise the LocalConfig.
-        """
+        """Initialise the LocalConfig."""
         super().__init__()
 
     MG_URI = "mongodb://{}:{}@localhost:27017".format(Config.MG_USER, Config.MG_PASS)
@@ -57,14 +47,10 @@ class LocalConfig(Config):
 
 
 class DockerConfig(Config):
-    """
-    Configuration for use with running locally with docker.
-    """
+    """Configuration for use with running locally with docker."""
 
     def __init__(self):
-        """
-        Initialise the DockerConfig.
-        """
+        """Initialise the DockerConfig."""
         super().__init__()
 
     MG_URI = "mongodb://{}:{}@mongo:27017".format(Config.MG_USER, Config.MG_PASS)
@@ -73,14 +59,10 @@ class DockerConfig(Config):
 
 
 class ProdConfig(Config):
-    """
-    Configuration for use when pushing to k8s production.
-    """
+    """Configuration for use when pushing to k8s production."""
 
     def __init__(self):
-        """
-        Initialise the ProdConfig.
-        """
+        """Initialise the ProdConfig."""
         super().__init__()
 
     MG_URI = "mongodb://{}:{}@mongo:27017".format(Config.MG_USER, Config.MG_PASS)

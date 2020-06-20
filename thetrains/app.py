@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+"""Module to create Flask and Dash applications."""
+
 from decouple import config
 from flask import Flask
 from dash import Dash
@@ -11,11 +13,10 @@ from thetrains.graph import Graph
 
 
 def create_flask():
-    """
-    Create the Flask instance for this application.
+    """Create the Flask instance for this application.
 
     Returns:
-        flask.Flask: Flask application
+        flask.Flask: flask application
     """
     server = Flask(__package__)
 
@@ -27,13 +28,12 @@ def create_flask():
 
 
 def create_dash(server):
-    """
-    Create the Dash instance for this application.
+    """Create the Dash instance for this application.
 
     Args:
-        server (flask.Flask): Flask application
+        server (flask.Flask): flask application
     Returns:
-        dash.Dash: Dash application
+        dash.Dash: dash application
     """
     app = Dash(
         name=__package__,

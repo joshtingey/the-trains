@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+"""Implements the thetrains graph network."""
+
 import logging
 import json
 
@@ -11,17 +13,14 @@ from common.mongo import Mongo
 
 
 class Graph(object):
-    """
-    Graph class for mapping the train network.
-    """
+    """Graph class for mapping the train network."""
 
     def __init__(self, log, mongo):
-        """
-        Initialise Graph.
+        """Initialise Graph.
 
         Args:
-            log (logging.logger): Logger to use
-            mongo (common.mongo.Mongo): Database class
+            log (logging.logger): logger to use
+            mongo (common.mongo.Mongo): database class
         """
         self.log = log
         self.mongo = mongo
@@ -35,8 +34,7 @@ class Graph(object):
         self.build()  # Build the graph
 
     def __repr__(self):
-        """
-        Graph string representation.
+        """Graph string representation.
 
         Returns:
             str: string detailing the train network graph
@@ -46,9 +44,7 @@ class Graph(object):
         )
 
     def build(self):
-        """
-        Build the graph from the database.
-        """
+        """Build the graph from the database."""
         for td in self.mongo.get("td"):
             self.graph.add_edge(td["from"], td["to"], weight=1.0)
 
@@ -76,8 +72,7 @@ class Graph(object):
 
     @property
     def nodes(self):
-        """
-        Get the graph nodes.
+        """Get the graph nodes.
 
         Returns:
             pd.DataFrame: DataFrame of node date
@@ -91,8 +86,7 @@ class Graph(object):
 
     @property
     def edges(self):
-        """
-        Get the edge positions.
+        """Get the edge positions.
 
         Returns:
             pd.DataFrame: DataFrame of lon and lat edge positions
@@ -109,9 +103,7 @@ class Graph(object):
 
 
 def main():
-    """
-    Main function called when graph is run standalone.
-    """
+    """Call when graph is run standalone."""
     log = logging.getLogger("graph")
 
     conf = config_dict["local"]

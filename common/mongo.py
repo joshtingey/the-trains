@@ -1,26 +1,19 @@
 # -*- coding: utf-8 -*-
 
-"""
-This module provides all the methods to communicate with the mongo
-database. This abstracts away the mechanics of the database from the
-rest of the source code
-"""
+"""Module to provide communication methods with the mongodb database."""
 
 from pymongo import MongoClient
 import pandas as pd
 
 
 class Mongo(object):
-    """
-    Class to handle MongoDB data flow.
-    """
+    """Class to handle MongoDB data flow."""
 
     def __init__(self, log, uri):
-        """
-        Initialise Mongo.
+        """Initialise Mongo.
 
         Args:
-            log (logging.logger): Logger to use
+            log (logging.logger): logger to use
             uri (str): MongoDB connection string
         """
         self.log = log  # We take the logger from the application
@@ -28,8 +21,7 @@ class Mongo(object):
         self.init(uri)
 
     def init(self, uri):
-        """
-        Initialise the MongoDB connection.
+        """Initialise the MongoDB connection.
 
         Args:
             uri (str): MongoDB connection string
@@ -43,8 +35,7 @@ class Mongo(object):
             self.client = None
 
     def drop(self, name):
-        """
-        Drop a named collection.
+        """Drop a named collection.
 
         Args:
             name (str): collection name
@@ -52,8 +43,7 @@ class Mongo(object):
         self.client.drop_collection(name)
 
     def add(self, collection, doc):
-        """
-        Add a document to a collection.
+        """Add a document to a collection.
 
         Args:
             collection (str): collection name
@@ -65,8 +55,7 @@ class Mongo(object):
             self.log.warning("Mongo error ({})".format(e))
 
     def get(self, collection):
-        """
-        Get all documents from a collection.
+        """Get all documents from a collection.
 
         Args:
             collection (str): collection name
@@ -78,8 +67,7 @@ class Mongo(object):
             return None
 
     def get_ppm_df(self):
-        """
-        Get a pandas dataframe containing all PPM data
+        """Get a pandas dataframe containing all PPM data.
 
         Returns:
             pd.DataFrame: PPM Pandas dataframe

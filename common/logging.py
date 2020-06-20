@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-"""
-This module creates the logging handler to be used, a client logger, which
-forwards to stdout. The log level is defined in the .env file. The handler is
+"""Module to setup logging with client handler.
+
+The log level is defined in the .env file. The handler is
 attached to all module/app loggers at initialisation.
 """
 
