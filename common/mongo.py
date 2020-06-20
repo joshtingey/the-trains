@@ -39,9 +39,7 @@ class Mongo(object):
             self.client = client.thetrains
             self.log.info("Connected to mongo at {}".format(uri))
         except Exception:
-            self.log.warning(
-                "Mongo connection error for {}, continue".format(uri)
-            )
+            self.log.warning("Mongo connection error for {}, continue".format(uri))
             self.client = None
 
     def drop(self, name):
@@ -87,12 +85,12 @@ class Mongo(object):
             pd.DataFrame: PPM Pandas dataframe
         """
         ppm_dict = {
-            'date': [],
-            'total': [],
-            'on_time': [],
-            'late': [],
-            'ppm': [],
-            'rolling_ppm': []
+            "date": [],
+            "total": [],
+            "on_time": [],
+            "late": [],
+            "ppm": [],
+            "rolling_ppm": [],
         }
 
         docs = self.get("ppm")
@@ -100,12 +98,12 @@ class Mongo(object):
             return None
 
         for doc in self.get("ppm"):
-            ppm_dict['date'].append(doc['date'])
-            ppm_dict['total'].append(doc['total'])
-            ppm_dict['on_time'].append(doc['on_time'])
-            ppm_dict['late'].append(doc['late'])
-            ppm_dict['ppm'].append(doc['ppm'])
-            ppm_dict['rolling_ppm'].append(doc['rolling_ppm'])
+            ppm_dict["date"].append(doc["date"])
+            ppm_dict["total"].append(doc["total"])
+            ppm_dict["on_time"].append(doc["on_time"])
+            ppm_dict["late"].append(doc["late"])
+            ppm_dict["ppm"].append(doc["ppm"])
+            ppm_dict["rolling_ppm"].append(doc["rolling_ppm"])
 
         df = pd.DataFrame.from_dict(ppm_dict)
         return df

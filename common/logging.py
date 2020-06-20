@@ -12,8 +12,7 @@ import logging
 
 # Logger setup
 # Configure logger format
-log_fmt = '[%(name)s] [%(threadName)s] [%(asctime)s] ' \
-          '[%(levelname)s] %(message)s'
+log_fmt = "[%(name)s] [%(threadName)s] [%(asctime)s] " "[%(levelname)s] %(message)s"
 
 logger_formatter = logging.Formatter(log_fmt)
 

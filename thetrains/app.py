@@ -39,7 +39,7 @@ def create_dash(server):
         name=__package__,
         server=server,
         suppress_callback_exceptions=True,
-        external_stylesheets=[dbc.themes.LUX]
+        external_stylesheets=[dbc.themes.LUX],
     )
 
     # Initialise logging
@@ -48,7 +48,7 @@ def create_dash(server):
     server.logger.removeHandler(app.logger.handlers[0])
 
     # Initialise the mongo database
-    app.mongo = Mongo(app.logger, app.server.config['MG_URI'])
+    app.mongo = Mongo(app.logger, app.server.config["MG_URI"])
 
     # Initialise the graph
     # TODO: periodically update the graph with any new data
@@ -61,7 +61,7 @@ def create_dash(server):
     server.config.setdefault("TITLE", "Dash")
 
     # Set the app name
-    app.title = 'thetrains'
+    app.title = "thetrains"
 
     return app
 

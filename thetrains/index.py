@@ -33,13 +33,12 @@ def add_navbar(body):
     return layout
 
 
-app.layout = html.Div([
-    dcc.Location(id='url', refresh=False),
-    html.Div(id='page-content')
-])
+app.layout = html.Div(
+    [dcc.Location(id="url", refresh=False), html.Div(id="page-content")]
+)
 
-@app.callback(Output('page-content', 'children'),
-              [Input('url', 'pathname')])
+
+@app.callback(Output("page-content", "children"), [Input("url", "pathname")])
 def display_page(pathname):
     """
     Displays the correct page for the URL
@@ -49,13 +48,13 @@ def display_page(pathname):
     Returns:
         dash.layout: Layout for page
     """
-    if pathname == '/':
+    if pathname == "/":
         return add_navbar(home_page.body())
-    elif pathname == '/ppm':
+    elif pathname == "/ppm":
         return add_navbar(ppm_page.body())
     else:
-        return '404'
+        return "404"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run_server(debug=True, port=8000)

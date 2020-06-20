@@ -28,7 +28,7 @@ class Graph(object):
         self.graph = nx.Graph()  # Create the empty graph
 
         # Load the known STANOX locations into memory
-        locations_file = open('./thetrains/locations.json')
+        locations_file = open("./thetrains/locations.json")
         self.locations = json.load(locations_file)
         locations_file.close()
 
@@ -41,8 +41,9 @@ class Graph(object):
         Returns:
             str: string detailing the train network graph
         """
-        return 'Train network graph with {} nodes and {} edges.'.format(
-            len(self.graph.nodes), len(self.graph.edges))
+        return "Train network graph with {} nodes and {} edges.".format(
+            len(self.graph.nodes), len(self.graph.edges)
+        )
 
     def build(self):
         """
@@ -55,25 +56,23 @@ class Graph(object):
         fixed_nodes = {}
         for node in self.graph.nodes:
             if node in self.locations:
-                self.graph.nodes[node]['fixed'] = True
-                self.graph.nodes[node]['lat'] = self.locations[node]['LAT']
-                self.graph.nodes[node]['lon'] = self.locations[node]['LON']
+                self.graph.nodes[node]["fixed"] = True
+                self.graph.nodes[node]["lat"] = self.locations[node]["LAT"]
+                self.graph.nodes[node]["lon"] = self.locations[node]["LON"]
                 fixed_nodes[node] = [
-                    self.locations[node]['LAT'],
-                    self.locations[node]['LON']
+                    self.locations[node]["LAT"],
+                    self.locations[node]["LON"],
                 ]
             else:
-                self.graph.nodes[node]['fixed'] = False
+                self.graph.nodes[node]["fixed"] = False
 
         # Run the spring layout algorithm on the network
         node_positions = nx.spring_layout(
-            self.graph, k=0.0001,
-            pos=fixed_nodes,
-            fixed=fixed_nodes.keys()
+            self.graph, k=0.0001, pos=fixed_nodes, fixed=fixed_nodes.keys()
         )
         for node, position in node_positions.items():
-            self.graph.nodes[node]['lat'] = position[0]
-            self.graph.nodes[node]['lon'] = position[1]
+            self.graph.nodes[node]["lat"] = position[0]
+            self.graph.nodes[node]["lon"] = position[1]
 
     @property
     def nodes(self):
@@ -86,9 +85,9 @@ class Graph(object):
         names, lat, lon = [], [], []
         for node in self.graph.nodes():
             names.append(node)
-            lat.append(self.graph.nodes[node]['lat'])
-            lon.append(self.graph.nodes[node]['lon'])
-        return pd.DataFrame({'name': names, 'lat': lat, 'lon': lon})
+            lat.append(self.graph.nodes[node]["lat"])
+            lon.append(self.graph.nodes[node]["lon"])
+        return pd.DataFrame({"name": names, "lat": lat, "lon": lon})
 
     @property
     def edges(self):
@@ -100,13 +99,13 @@ class Graph(object):
         """
         lat, lon = [], []
         for edge in self.graph.edges():
-            lat.append(self.graph.nodes[edge[0]]['lat'])
-            lat.append(self.graph.nodes[edge[1]]['lat'])
+            lat.append(self.graph.nodes[edge[0]]["lat"])
+            lat.append(self.graph.nodes[edge[1]]["lat"])
             lat.append(None)
-            lon.append(self.graph.nodes[edge[0]]['lon'])
-            lon.append(self.graph.nodes[edge[1]]['lon'])
+            lon.append(self.graph.nodes[edge[0]]["lon"])
+            lon.append(self.graph.nodes[edge[1]]["lon"])
             lon.append(None)
-        return pd.DataFrame({'lat': lat, 'lon': lon})
+        return pd.DataFrame({"lat": lat, "lon": lon})
 
 
 def main():
@@ -115,7 +114,7 @@ def main():
     """
     log = logging.getLogger("graph")
 
-    conf = config_dict['local']
+    conf = config_dict["local"]
     conf.init_logging(log)
     mongo = Mongo(log, conf.MG_URI)
 
@@ -123,5 +122,5 @@ def main():
     print(graph)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
