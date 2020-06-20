@@ -16,17 +16,15 @@ class Config(object):
     """
     Base config class with all common configuration variables and methods.
     """
-    MG_USER = config(
-        'MONGO_INITDB_ROOT_USERNAME', default="mongo_db_user"
-    )
-    MG_PASS = config(
-        'MONGO_INITDB_ROOT_PASSWORD', default="mongo_db_pass"
-    )
 
-    MAPBOX_TOKEN = config('MAPBOX_TOKEN')
-    CONN_ATTEMPTS = config('CONN_ATTEMPTS', cast=int, default=5)
-    PPM_FEED = config('PPM_FEED', cast=bool, default=False)
-    TD_FEED = config('TD_FEED', cast=bool, default=False)
+    MG_USER = config("MONGO_INITDB_ROOT_USERNAME", default="mongo_db_user")
+    MG_PASS = config("MONGO_INITDB_ROOT_PASSWORD", default="mongo_db_pass")
+
+    MAPBOX_TOKEN = config("MAPBOX_TOKEN")
+    CONN_ATTEMPTS = config("CONN_ATTEMPTS", cast=int, default=5)
+    PPM_FEED = config("PPM_FEED", cast=bool, default=False)
+    TD_FEED = config("TD_FEED", cast=bool, default=False)
+    TM_FEED = config("TM_FEED", cast=bool, default=False)
 
     @staticmethod
     def init_logging(log):
@@ -36,7 +34,7 @@ class Config(object):
         Args:
             log (logging.logger): Logger to initialise
         """
-        log_level = logging.getLevelName(config("LOG_LEVEL", default='INFO'))
+        log_level = logging.getLevelName(config("LOG_LEVEL", default="INFO"))
         log.setLevel(log_level)
         client_logger.setLevel(log_level)
         log.addHandler(client_logger)
@@ -53,12 +51,9 @@ class LocalConfig(Config):
         """
         super().__init__()
 
-    MG_URI = 'mongodb://{}:{}@localhost:27017'.format(
-        Config.MG_USER,
-        Config.MG_PASS
-    )
-    NR_USER = config('NR_USER_DEV')
-    NR_PASS = config('NR_PASS_DEV')
+    MG_URI = "mongodb://{}:{}@localhost:27017".format(Config.MG_USER, Config.MG_PASS)
+    NR_USER = config("NR_USER_DEV")
+    NR_PASS = config("NR_PASS_DEV")
 
 
 class DockerConfig(Config):
@@ -72,12 +67,9 @@ class DockerConfig(Config):
         """
         super().__init__()
 
-    MG_URI = 'mongodb://{}:{}@mongo:27017'.format(
-        Config.MG_USER,
-        Config.MG_PASS
-    )
-    NR_USER = config('NR_USER_DEV')
-    NR_PASS = config('NR_PASS_DEV')
+    MG_URI = "mongodb://{}:{}@mongo:27017".format(Config.MG_USER, Config.MG_PASS)
+    NR_USER = config("NR_USER_DEV")
+    NR_PASS = config("NR_PASS_DEV")
 
 
 class ProdConfig(Config):
@@ -91,18 +83,11 @@ class ProdConfig(Config):
         """
         super().__init__()
 
-    MG_URI = 'mongodb://{}:{}@mongo:27017'.format(
-        Config.MG_USER,
-        Config.MG_PASS
-    )
-    NR_USER = config('NR_USER_PROD')
-    NR_PASS = config('NR_PASS_PROD')
+    MG_URI = "mongodb://{}:{}@mongo:27017".format(Config.MG_USER, Config.MG_PASS)
+    NR_USER = config("NR_USER_PROD")
+    NR_PASS = config("NR_PASS_PROD")
 
 
 # Create a config dictionary which is used while initiating the application.
 # Config that is going to be used will be specified in the .env file
-config_dict = {
-    'local': LocalConfig,
-    'docker': DockerConfig,
-    'prod': ProdConfig
-}
+config_dict = {"local": LocalConfig, "docker": DockerConfig, "prod": ProdConfig}
