@@ -14,7 +14,7 @@ spec:
         app: collector
     spec:
       containers:
-      - name: collector
-        image: registry.gitlab.com/joshtingey/thetrains/collector:latest
-        imagePullPolicy: "Always"
+        - name: collector
+          image: registry.gitlab.com/joshtingey/the-trains/collector:latest
+          imagePullPolicy: "Always"
       restartPolicy: Always

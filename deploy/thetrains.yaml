@@ -14,7 +14,6 @@ spec:
       targetPort: 8000
 
 ---
-
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
@@ -25,20 +24,19 @@ metadata:
     cert-manager.io/cluster-issuer: "letsencrypt-prod" # Can comment this out for no certificates
 spec:
   tls:
-  - hosts:
-    - <DOMAIN>
-    secretName: thetrains-tls
+    - hosts:
+        - <DOMAIN>
+      secretName: thetrains-tls
   rules:
-  - host: <DOMAIN>
-    http:
-      paths:
-      - path: /
-        backend:
-          serviceName: thetrains
-          servicePort: 80
+    - host: <DOMAIN>
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: thetrains
+              servicePort: 80
 
 ---
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -55,8 +53,8 @@ spec:
         app: thetrains
     spec:
       containers:
-      - name: thetrains
-        image: registry.gitlab.com/joshtingey/thetrains/thetrains:latest
-        imagePullPolicy: "Always"
-        ports:
-        - containerPort: 8000
+        - name: thetrains
+          image: registry.gitlab.com/joshtingey/the-trains/thetrains:latest
+          imagePullPolicy: "Always"
+          ports:
+            - containerPort: 8000
