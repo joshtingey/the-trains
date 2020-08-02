@@ -15,7 +15,7 @@ else
     echo "${C_BLUE}INFO:${C_RESET}    Creating python environment"
     python3 -m venv .venv
     source .venv/bin/activate
-    pip install -r requirements.txt -r common/requirements.txt -r thetrains/requirements.txt -r collector/requirements.txt
+    pip install -r ./app/requirements.txt -r ./app/common/requirements.txt -r ./app/thetrains/requirements.txt -r ./app/collector/requirements.txt
 fi
 
 echo "${C_BLUE}INFO:${C_RESET}    Exporting environment variables"
@@ -41,7 +41,7 @@ else
     kubectl config use-context microk8s
 fi
 
-export PYTHONPATH=$PYTHONPATH:$(pwd)
+export PYTHONPATH=$PYTHONPATH:$(pwd)/app
 echo "${C_BLUE}INFO:${C_RESET}    Setup complete"
 cd $CURRENTDIR
 

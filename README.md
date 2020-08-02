@@ -20,13 +20,13 @@ Create an .env file and set the following variables...
 
 To start all the containers run...
 
-```
+```bash
 $ make dev
 ```
 
 You can then view the dash application at localhost:8000. To then stop all the container run...
 
-```
+```bash
 $ make down
 ```
 
@@ -34,13 +34,13 @@ $ make down
 
 To start a production deployment locally with an nginx reverse proxy and certificates cofigured run...
 
-```
+```bash
 $ make prod
 ```
 
 You can then view the dash application at localhost:80. To then stop all the container run...
 
-```
+```bash
 $ make down
 ```
 
@@ -48,18 +48,26 @@ $ make down
 
 To build and push the containers to the container repository run...
 
-```
+```bash
 $ skaffold build
 ```
 
 To deploy everything run...
 
-```
+```bash
 $ source scripts/deploy.sh
 ```
 
 To continuously build and deploy to the cluster while you make changes run...
 
-```
+```bash
 $ skaffold dev
+```
+
+## Checking the mongodb database
+
+```bash
+$ mongo --username mongo_db_user --password mongo_db_pass --authenticationDatabase admin
+$ use thetrains
+$ db.BERTHS.find()
 ```

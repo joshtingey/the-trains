@@ -24,17 +24,20 @@ prod_deploy:
 	./deploy/deploy.sh
 
 test:
-	black ./common/ --check
-	black ./collector/ --check
-	black ./thetrains/ --check
+	black ./app/common/ --check
+	black ./app/data_collector/ --check
+	black ./app/graph_generator/ --check
+	black ./app/thetrains_app/ --check
 	black ./tests/ --check
-	flake8 --max-line-length=99 ./common/
-	flake8 --max-line-length=99 ./collector/
-	flake8 --max-line-length=99 ./thetrains/
+	flake8 --max-line-length=99 ./app/common/
+	flake8 --max-line-length=99 ./app/data_collector/
+	flake8 --max-line-length=99 ./app/graph_generator/
+	flake8 --max-line-length=99 ./app/thetrains_app/
 	flake8 --max-line-length=99 ./tests/
-	pydocstyle ./common/
-	pydocstyle ./collector/
-	pydocstyle ./thetrains/
+	pydocstyle ./app/common/
+	pydocstyle ./app/data_collector/
+	pydocstyle ./app/graph_generator/
+	pydocstyle ./app/thetrains_app/
 	pydocstyle ./tests/
 	pytest
 

@@ -1,7 +1,6 @@
-version: '3'
+version: "3"
 
 services:
-
   mongo:
     container_name: mongo
     restart: always
@@ -10,27 +9,36 @@ services:
     ports:
       - 27017:27017
     volumes:
-      - mongo:/data/db
+      - thetrains_mongo:/data/db
 
-  collector:
-    container_name: collector
+  data-collector:
+    container_name: data-collector
     restart: "no"
-    build: 
+    build:
       context: ./
-      dockerfile: ./collector/Dockerfile
+      dockerfile: ./app/data_collector/Dockerfile
     depends_on:
       - mongo
 
-  thetrains:
-    container_name: thetrains
-    restart: "no"
-    build: 
-      context: ./
-      dockerfile: ./thetrains/Dockerfile
-    ports:
-      - "8000:8000"
-    depends_on:
-      - mongo
+#  graph-generator:
+#    container_name: graph-generator
+#    restart: "no"
+#    build:
+#      context: ./
+#      dockerfile: ./app/graph_generator/Dockerfile
+#    depends_on:
+#      - mongo
+
+#  thetrains-app:
+#    container_name: thetrains-app
+#    restart: "no"
+#    build:
+#      context: ./
+#      dockerfile: ./app/thetrains_app/Dockerfile
+#    ports:
+#      - "8000:8000"
+#    depends_on:
+#      - mongo
 
 volumes:
-  mongo:
+  thetrains_mongo:

@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: graph-generator
+  namespace: thetrains
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: graph-generator
+  template:
+    metadata:
+      labels:
+        app: graph-generator
+    spec:
+      containers:
+        - name: graph-generator
+          image: registry.gitlab.com/joshtingey/the-trains/graph-generator:latest
+          imagePullPolicy: "Always"
+      restartPolicy: Always
