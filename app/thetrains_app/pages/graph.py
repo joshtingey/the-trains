@@ -16,7 +16,7 @@ def set_colour(x):
     Returns:
         bool: color dependent on input
     """
-    if x:
+    if x == "0000":
         return "#AFD275"
     else:
         return "#E7717D"
@@ -50,8 +50,11 @@ def body():
             mode="markers",
             lat=nodes["LATITUDE"].tolist(),
             lon=nodes["LONGITUDE"].tolist(),
-            marker=dict(size=9, color=list(map(set_colour, nodes["FIXED"].tolist()))),
-            hovertext=nodes.index.values.tolist(),
+            marker=dict(
+                size=9, color=list(map(set_colour, nodes["LATEST_DESCR"].tolist()))
+            ),
+            # hovertext=nodes.index.values.tolist(),
+            hovertext=nodes["LATEST_DESCR"].tolist(),
             hoverinfo="text",
         )
     )

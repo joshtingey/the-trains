@@ -131,5 +131,6 @@ class Mongo(object):
                         lon.append(None)
 
         nodes = pd.DataFrame.from_dict(selected, orient="index")
+        nodes["FIXED"].fillna(False, inplace=True)
         edges = pd.DataFrame({"LATITUDE": lat, "LONGITUDE": lon})
         return nodes, edges

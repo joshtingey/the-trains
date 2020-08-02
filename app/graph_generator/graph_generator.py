@@ -80,7 +80,7 @@ class GraphGenerator(object):
 
         # Loop through all berths and add nodes and edges to the graph
         for berth in berths:
-            if "LONGITUDE" in list(berth.keys()):
+            if "FIXED" in list(berth.keys()):
                 self.graph.add_node(
                     berth["NAME"],
                     lon=berth["LONGITUDE"] * 100000,
@@ -125,10 +125,12 @@ class GraphGenerator(object):
         """Run the spring layout that positions all the nodes."""
         # Run the spring layout algorithm on the network
         known_dict = dict(
-            (n, [d["LATITUDE"], d["LONGITUDE"]])
+            (n, [d["lat"], d["lon"]])
             for n, d in self.graph.nodes().items()
-            if d["FIXED"] is True
+            if d["fixed"] is True
         )
+
+        self.log.debug("There are {} fixed nodes".format(len(known_dict)))
 
         try:
             node_positions = nx.spring_layout(

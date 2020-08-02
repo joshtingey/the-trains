@@ -20,25 +20,25 @@ services:
     depends_on:
       - mongo
 
-#  graph-generator:
-#    container_name: graph-generator
-#    restart: "no"
-#    build:
-#      context: ./
-#      dockerfile: ./app/graph_generator/Dockerfile
-#    depends_on:
-#      - mongo
+  graph-generator:
+    container_name: graph-generator
+    restart: "no"
+    build:
+      context: ./
+      dockerfile: ./app/graph_generator/Dockerfile
+    depends_on:
+      - mongo
 
-#  thetrains-app:
-#    container_name: thetrains-app
-#    restart: "no"
-#    build:
-#      context: ./
-#      dockerfile: ./app/thetrains_app/Dockerfile
-#    ports:
-#      - "8000:8000"
-#    depends_on:
-#      - mongo
+  thetrains-app:
+    container_name: thetrains-app
+    restart: "no"
+    build:
+      context: ./
+      dockerfile: ./app/thetrains_app/Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo
 
 volumes:
   thetrains_mongo:
