@@ -78,6 +78,7 @@ An .env file is required with the following variables...
 | CERT_EMAIL                 | str  | Email for certificate generation            |
 | DOMAIN                     | str  | Domain name for application                 |
 
+See .env.example for an example
 
 ## Checking the mongodb database
 
