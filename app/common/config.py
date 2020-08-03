@@ -51,8 +51,8 @@ class LocalConfig(Config):
         super().__init__()
 
     MG_URI = "mongodb://{}:{}@localhost:27017".format(Config.MG_USER, Config.MG_PASS)
-    NR_USER = config("NR_USER_DEV")
-    NR_PASS = config("NR_PASS_DEV")
+    NR_USER = config("NR_USER_DEV", default="test")
+    NR_PASS = config("NR_PASS_DEV", default="test")
 
 
 class DockerConfig(Config):
@@ -63,8 +63,8 @@ class DockerConfig(Config):
         super().__init__()
 
     MG_URI = "mongodb://{}:{}@mongo:27017".format(Config.MG_USER, Config.MG_PASS)
-    NR_USER = config("NR_USER_DEV")
-    NR_PASS = config("NR_PASS_DEV")
+    NR_USER = config("NR_USER_DEV", default="test")
+    NR_PASS = config("NR_PASS_DEV", default="test")
 
 
 class ProdConfig(Config):
@@ -75,8 +75,8 @@ class ProdConfig(Config):
         super().__init__()
 
     MG_URI = "mongodb://{}:{}@mongo:27017".format(Config.MG_USER, Config.MG_PASS)
-    NR_USER = config("NR_USER_PROD")
-    NR_PASS = config("NR_PASS_PROD")
+    NR_USER = config("NR_USER_PROD", default="test")
+    NR_PASS = config("NR_PASS_PROD", default="test")
 
 
 # Create a config dictionary which is used while initiating the application.
