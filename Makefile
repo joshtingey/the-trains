@@ -1,6 +1,6 @@
 mongo_up:
 	sed -i "s/ENV=.*/ENV=local/g" .env
-	./deploy/local_mongo.sh
+	./mongo.sh
 
 mongo_down:
 	sed -i "s/ENV=.*/ENV=local/g" .env
@@ -15,13 +15,13 @@ docker_down:
 	sed -i "s/ENV=.*/ENV=docker/g" .env
 	docker-compose down
 
-prod_build:
+prod_setup:
 	sed -i "s/ENV=.*/ENV=prod/g" .env
-	sudo skaffold build -f ./deploy/skaffold.yaml
+	./k8s/setup.sh
 
 prod_deploy:
 	sed -i "s/ENV=.*/ENV=prod/g" .env
-	./deploy/deploy.sh
+	skaffold run -f ./k8s/skaffold.yaml
 
 test:
 	black ./app/common/ --check

@@ -2,24 +2,23 @@ apiVersion: skaffold/v2beta2
 kind: Config
 build:
   artifacts:
-    - image: registry.gitlab.com/joshtingey/thetrains/data-collector
+    - image: registry.gitlab.com/joshtingey/the-trains/data-collector
       context: ./
       docker:
         dockerfile: ./app/data_collector/Dockerfile
-    - image: registry.gitlab.com/joshtingey/thetrains/graph-generator
+    - image: registry.gitlab.com/joshtingey/the-trains/graph-generator
       context: ./
       docker:
         dockerfile: ./app/graph_generator/Dockerfile
-    - image: registry.gitlab.com/joshtingey/thetrains/thetrains-app
+    - image: registry.gitlab.com/joshtingey/the-trains/thetrains-app
       context: ./
       docker:
         dockerfile: ./app/thetrains_app/Dockerfile
-
   tagPolicy:
     sha256: {}
 deploy:
   kubectl:
     manifests:
-      - ./deploy/data_collector.yaml
-      - ./deploy/graph_generator.yaml
-      - ./deploy/thetrains_app.yaml
+      - ./k8s/deployments/data_collector.yaml
+      - ./k8s/deployments/graph_generator.yaml
+      - ./k8s/deployments/thetrains_app.yaml

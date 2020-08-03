@@ -207,20 +207,6 @@ class TMFeed(StompFeed):
             log.error("Can't decode STOMP message")
             return
 
-        """
-        - we start tracking a train when we see a train movement message
-        - we append stanox locations and times to lists as we get move movement messages
-        - we also append TD+berth codes to a list as we see movements in the train
-          describer messages by matching the train headcode to its code here.
-        - we also record the latest timestamp of any event happening for that train
-        - once a train has not had anything happen to it for an hour we close it
-
-        - we can then build a graph of berth->berth connections
-
-        Assumptions:
-            - No two trains can ever have the same id on the same day
-        """
-
         for msg in parsed:
             msg_type = msg["header"]["msg_type"]
             msg = msg["body"]

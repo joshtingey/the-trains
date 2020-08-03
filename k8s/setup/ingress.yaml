@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: thetrains-app
+  namespace: thetrains
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod" # Can comment this out for no certificates
+spec:
+  tls:
+    - hosts:
+        - <DOMAIN>
+      secretName: thetrains-app-tls
+  rules:
+    - host: <DOMAIN>
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: thetrains-app
+              servicePort: 80

@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thetrains-app
+  namespace: thetrains
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thetrains-app
+  template:
+    metadata:
+      labels:
+        app: thetrains-app
+    spec:
+      containers:
+        - name: thetrains-app
+          image: registry.gitlab.com/joshtingey/the-trains/thetrains-app:latest
+          imagePullPolicy: "Always"
+          ports:
+            - containerPort: 8000

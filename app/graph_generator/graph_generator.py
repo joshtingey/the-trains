@@ -27,7 +27,7 @@ def timer(func):
         return_value = func(*args, **kwargs)
         end_time = time.perf_counter()
         run_time = end_time - start_time
-        log.debug(f"Completed {func.__name__!r} in {run_time:.4f} secs")
+        log.info(f"Completed {func.__name__!r} in {run_time:.4f} secs")
         return return_value
 
     return wrapper_timer
@@ -49,7 +49,7 @@ class GraphGenerator(object):
         self.mongo = mongo
         self.k = k
         self.iterations = iterations
-        self.log.debug("k: {}, iterations: {}".format(self.k, self.iterations))
+        self.log.info("k: {}, iterations: {}".format(self.k, self.iterations))
 
     def run(self):
         """Build, tidy, and layout the graph."""
@@ -94,7 +94,7 @@ class GraphGenerator(object):
                 for connected_berth in berth["CONNECTIONS"]:
                     self.graph.add_edge(berth["NAME"], connected_berth, weight=1.0)
 
-        self.log.debug("Nodes from db {}".format(len(self.graph.nodes)))
+        self.log.info("Nodes from db {}".format(len(self.graph.nodes)))
 
         return True
 
@@ -115,9 +115,7 @@ class GraphGenerator(object):
         nodes_between.extend(list(known.keys()))  # Add on fixed nodes
 
         self.graph = self.graph.subgraph(nodes_between)
-        self.log.debug(
-            "Nodes remaining after cleaning {}".format(len(self.graph.nodes))
-        )
+        self.log.info("Nodes remaining after cleaning {}".format(len(self.graph.nodes)))
         return True
 
     @timer
@@ -130,7 +128,7 @@ class GraphGenerator(object):
             if d["fixed"] is True
         )
 
-        self.log.debug("There are {} fixed nodes".format(len(known_dict)))
+        self.log.info("There are {} fixed nodes".format(len(known_dict)))
 
         try:
             node_positions = nx.spring_layout(

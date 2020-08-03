@@ -78,9 +78,6 @@ def body():
                     width=12,
                 )
             ),
-            dcc.Interval(
-                id="ppm-interval", interval=1 * 10000, n_intervals=0  # in milliseconds
-            ),
         ],
         fluid=True,
     )

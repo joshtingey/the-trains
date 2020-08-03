@@ -10,7 +10,6 @@ data:
   MONGO_INITDB_ROOT_PASSWORD: <MONGO_INITDB_ROOT_PASSWORD>
 
 ---
-
 apiVersion: v1
 kind: Service
 metadata:
@@ -26,24 +25,22 @@ spec:
     app: mongo
 
 ---
-
 apiVersion: v1
 kind: PersistentVolumeClaim
-metadata: 
+metadata:
   name: mongo-pvc
   namespace: thetrains
   labels:
     app: mongo
-spec: 
-  accessModes: 
+spec:
+  accessModes:
     - ReadWriteOnce
-  resources: 
-    requests: 
+  resources:
+    requests:
       storage: 20Gi
   storageClassName: microk8s-hostpath
 
 ---
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -64,17 +61,17 @@ spec:
         app: mongo
     spec:
       containers:
-      - name: mongo
-        image: mongo:latest
-        envFrom:
-          - configMapRef:
-              name: mongo-config
-        ports:
-        - containerPort: 27017
-          name: mongo
-        volumeMounts:
-          - name: mongo-volume
-            mountPath: /data/db
+        - name: mongo
+          image: mongo:latest
+          envFrom:
+            - configMapRef:
+                name: mongo-config
+          ports:
+            - containerPort: 27017
+              name: mongo
+          volumeMounts:
+            - name: mongo-volume
+              mountPath: /data/db
       volumes:
         - name: mongo-volume
           persistentVolumeClaim:

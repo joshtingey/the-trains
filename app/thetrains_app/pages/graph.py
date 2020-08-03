@@ -5,28 +5,17 @@
 import dash_core_components as dcc
 import dash_bootstrap_components as dbc
 import dash_html_components as html
+from dash.dependencies import Input, Output
 import plotly.graph_objects as go
 
 from thetrains_app.app import app
 
 
-def set_colour(x):
-    """Map a bool to a color.
+def get_graph_map():
+    """Get the graph rail network mapbox map.
 
     Returns:
-        bool: color dependent on input
-    """
-    if x == "0000":
-        return "#AFD275"
-    else:
-        return "#E7717D"
-
-
-def body():
-    """Get map page body.
-
-    Returns:
-        html.Div: dash layout
+        go.Figure: Scattermapbox of rail network graph
     """
     # Get the nodes and edges and pandas dataframes from the database
     nodes, edges = app.mongo.get_berths()
@@ -39,7 +28,7 @@ def body():
             mode="lines",
             lat=edges["LATITUDE"].tolist(),
             lon=edges["LONGITUDE"].tolist(),
-            line=dict(width=0.5, color="#888"),
+            line=dict(width=1.0, color="#888"),
             hoverinfo="none",
         )
     )
@@ -50,11 +39,10 @@ def body():
             mode="markers",
             lat=nodes["LATITUDE"].tolist(),
             lon=nodes["LONGITUDE"].tolist(),
-            marker=dict(
-                size=9, color=list(map(set_colour, nodes["LATEST_DESCR"].tolist()))
+            marker=go.scattermapbox.Marker(
+                size=12, color=nodes["COLOUR"].tolist(), opacity=0.7
             ),
-            # hovertext=nodes.index.values.tolist(),
-            hovertext=nodes["LATEST_DESCR"].tolist(),
+            hovertext=nodes["TEXT"].tolist(),
             hoverinfo="text",
         )
     )
@@ -74,16 +62,48 @@ def body():
         ),
     )
 
+    graph_map["layout"]["uirevision"] = "constant"
+    return graph_map
+
+
+def body():
+    """Get map page body.
+
+    Returns:
+        html.Div: dash layout
+    """
     # Put everything in a dcc container and return
     body = dbc.Container(
         [
-            dbc.Row(dbc.Col(dcc.Graph(figure=graph_map))),
+            dbc.Row(
+                dbc.Col(
+                    dbc.Card(
+                        "This map displays the generated 'graph' of the UK rail network. \
+                            Red markers indicate a current train location.",
+                        body=True,
+                    ),
+                    width={"size": 6, "offset": 3},
+                )
+            ),
+            dbc.Row(dbc.Col(dcc.Graph(id="graph-map", figure=get_graph_map()))),
             dcc.Interval(
-                id="graph-interval",
-                interval=1 * 10000,
+                id="graph-page-interval",
+                interval=1 * 30000,
                 n_intervals=0,  # in milliseconds
             ),
         ],
         fluid=True,
     )
     return body
+
+
+@app.callback(
+    Output("graph-map", "figure"), [Input("graph-page-interval", "n_intervals")]
+)
+def update_graph_map(n):
+    """Update the graph rail network mapbox map.
+
+    Returns:
+        go.Figure: Scattermapbox of rail network graph
+    """
+    return get_graph_map()

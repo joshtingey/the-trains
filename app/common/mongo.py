@@ -111,6 +111,35 @@ class Mongo(object):
             pd.DataFrame: nodes dataframe
             pd.DataFrame: edges dataframe
         """
+
+        def apply_text(node):
+            """Generate the hover text to display for each node.
+
+            Returns:
+                str: hover text for node
+            """
+            text = "Berth name: " + node["NAME"]
+
+            if node["FIXED"]:
+                text = text + ", Exact location: True"
+            else:
+                text = text + ", Exact location: False"
+
+            if node["LATEST_DESCR"] != "0000":
+                text = text + ", Current train:" + node["LATEST_DESCR"]
+            return text
+
+        def apply_colour(node):
+            """Generate colour of each node.
+
+            Returns:
+                str: color for node
+            """
+            if node["LATEST_DESCR"] == "0000":
+                return "#AFD275"
+            else:
+                return "#E7717D"
+
         berths = self.get("BERTHS")
         selected = {}
         for b in berths:
@@ -118,6 +147,13 @@ class Mongo(object):
                 if b["SELECTED"]:
                     selected[b["NAME"]] = b
 
+        # Generate nodes dataframe
+        nodes = pd.DataFrame.from_dict(selected, orient="index")
+        nodes["FIXED"].fillna(False, inplace=True)
+        nodes["TEXT"] = nodes.apply(apply_text, axis=1)
+        nodes["COLOUR"] = nodes.apply(apply_colour, axis=1)
+
+        # Generate edges dataframe
         lat, lon = [], []
         for name, data in selected.items():
             if "CONNECTIONS" in list(data.keys()):
@@ -129,8 +165,6 @@ class Mongo(object):
                         lon.append(data["LONGITUDE"])
                         lon.append(selected[connection]["LONGITUDE"])
                         lon.append(None)
-
-        nodes = pd.DataFrame.from_dict(selected, orient="index")
-        nodes["FIXED"].fillna(False, inplace=True)
         edges = pd.DataFrame({"LATITUDE": lat, "LONGITUDE": lon})
+
         return nodes, edges
