@@ -3,9 +3,9 @@
 echo "Deploying..."
 
 read_var() {
-    VAR=$(grep $1 $2 | xargs)
+    VAR=$(grep "$1" "$2" | xargs)
     IFS="=" read -ra VAR <<< "$VAR"
-    echo ${VAR[1]}
+    echo "${VAR[1]}"
 }
 
 MONGO_INITDB_ROOT_USERNAME=$(read_var MONGO_INITDB_ROOT_USERNAME .env)

@@ -5,23 +5,23 @@
 A personal project to produce a web based dash(flask) application to display the results of train related data analysis. The website for this code is at [https://thetrains.co.uk/](https://thetrains.co.uk/). 
 
 Currently the deployment consists of 4 containers...
-1. MongoDB database - persists all data
-2. Data collector - collects data from the Network Rail data feeds
-3. Graph generator - creates rail network 'graph' from berth-level data and runs Fruchterman-Reingold force-directed algorithm for positions
-4. Dash app - dash application frontend to display the graph etc...
+1.  MongoDB database - persists all data
+2.  Data collector - collects data from the Network Rail data feeds
+3.  Graph generator - creates rail network 'graph' from berth-level data and runs Fruchterman-Reingold force-directed algorithm for positions
+4.  Dash app - dash application frontend to display the graph etc...
 
 ## Develop locally with docker-compose
 
 First a .env file is required, see below. Then to start all the containers run...
 
 ```bash
-$ make docker_up
+make docker_up
 ```
 
 You can then view the dash application at localhost:8000. To then stop all the container run...
 
 ```bash
-$ make docker_down
+make docker_down
 ```
 
 ## Deploy to Kubernetes Cluster
@@ -31,26 +31,26 @@ First a .env file is required, see below. Also, you need to have a cluster set u
 To run the initial cluster setup run...
 
 ```bash
-$ source k8s/setup.sh
+source k8s/setup.sh
 ```
 
 This sets up the namespace, certificates and the application service and ingress.
 To build and push the containers to the container repository run...
 
 ```bash
-$ skaffold build
+skaffold build
 ```
 
 To deploy everything run...
 
 ```bash
-$ skaffold deploy
+skaffold deploy
 ```
 
 To continuously build and deploy to the cluster while you make changes run...
 
 ```bash
-$ skaffold dev
+skaffold dev
 ```
 
 ## Environment variables
@@ -83,7 +83,7 @@ See .env.example for an example
 ## Checking the mongodb database
 
 ```bash
-$ mongo --username <MONGO_INITDB_ROOT_USERNAME> --password <MONGO_INITDB_ROOT_PASSWORD> --authenticationDatabase admin
-$ use thetrains
-$ db.BERTHS.find()  # To display all BERTH documents
+mongo --username <MONGO_INITDB_ROOT_USERNAME> --password <MONGO_INITDB_ROOT_PASSWORD> --authenticationDatabase admin
+use thetrains
+db.BERTHS.find()  # To display all BERTH documents
 ```
