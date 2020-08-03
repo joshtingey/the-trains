@@ -17,7 +17,7 @@ class Config(object):
     MG_PASS = config("MONGO_INITDB_ROOT_PASSWORD", default="mongo_db_pass")
 
     # Mapbox configuration
-    MAPBOX_TOKEN = config("MAPBOX_TOKEN")
+    MAPBOX_TOKEN = config("MAPBOX_TOKEN", default="test")
 
     # Data collector configuration
     CONN_ATTEMPTS = config("CONN_ATTEMPTS", cast=int, default=5)
