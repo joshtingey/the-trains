@@ -15,7 +15,7 @@ else
     echo "${C_BLUE}INFO:${C_RESET}    Creating python environment"
     python3 -m venv .venv
     source .venv/bin/activate
-    pip install -r ./app/requirements.txt -r ./app/common/requirements.txt -r ./app/thetrains/requirements.txt -r ./app/collector/requirements.txt
+    pip install -r ./app/requirements.txt -r ./app/common/requirements.txt -r ./app/thetrains_app/requirements.txt -r ./app/data_collector/requirements.txt -r ./app/graph_generator/requirements.txt
 fi
 
 echo "${C_BLUE}INFO:${C_RESET}    Exporting environment variables"
