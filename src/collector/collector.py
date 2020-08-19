@@ -418,7 +418,12 @@ def main():
         generate(mongo, log)
 
     # Setup the STOMP national rail data feed collector
-    collector = STOMPCollector(mongo, Config.COLLECTOR_ATTEMPTS, Config.COLLECTOR_NR_USER, Config.COLLECTOR_NR_PASS)
+    collector = STOMPCollector(
+        mongo,
+        Config.COLLECTOR_ATTEMPTS,
+        Config.COLLECTOR_NR_USER,
+        Config.COLLECTOR_NR_PASS,
+    )
     collector.connect()
 
     # Subscribe to the configured feeds

@@ -5,27 +5,21 @@ import common.config
 
 def check_base_attributes(config):
     attributes = [
-        "MG_USER",
-        "MG_PASS",
-        "MAPBOX_TOKEN",
-        "CONN_ATTEMPTS",
-        "PPM_FEED",
-        "TD_FEED",
+        "MONGO_USER",
+        "MONGO_PASS",
+        "MONGO_URI",
+        "DASH_MAPBOX_TOKEN",
+        "COLLECTOR_NR_USER",
+        "COLLECTOR_NR_PASS",
+        "COLLECTOR_ATTEMPTS",
+        "COLLECTOR_PPM",
+        "COLLECTOR_TD",
+        "COLLECTOR_TM",
+        "GENERATOR_UPDATE_RATE",
+        "GENERATOR_K",
+        "GENERATOR_ITERATIONS",
     ]
-    types = [str, str, str, int, bool, bool]
-    errors = []
-    for i, attribute in enumerate(attributes):
-        if not hasattr(config, attribute):
-            errors.append("No {} attribute".format(attribute))
-        if not type(getattr(config, attribute)) == types[i]:
-            errors.append("Wrong type for {} attribute".format(attribute))
-
-    assert not errors, "errors occured:\n{}".format("\n".join(errors))
-
-
-def check_extra_attributes(config):
-    attributes = ["MG_URI", "NR_USER", "NR_PASS"]
-    types = [str, str, str]
+    types = [str, str, str, str, str, str, int, bool, bool, bool, int, float, int]
     errors = []
     for i, attribute in enumerate(attributes):
         if not hasattr(config, attribute):
@@ -39,18 +33,6 @@ def check_extra_attributes(config):
 def test_base_attributes():
     base_config = common.config.Config()
     check_base_attributes(base_config)
-
-
-def test_local_attributes():
-    local_config = common.config.LocalConfig()
-    check_base_attributes(local_config)
-    check_extra_attributes(local_config)
-
-
-def test_prod_attributes():
-    prod_config = common.config.ProdConfig()
-    check_base_attributes(prod_config)
-    check_extra_attributes(prod_config)
 
 
 def test_logging_handlers():

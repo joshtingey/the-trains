@@ -48,6 +48,20 @@ To continuously build and deploy to the cluster while you make changes run...
 skaffold dev
 ```
 
+## Running the tests
+
+The tests and other checking is run within a docker container, use by running...
+
+```bash
+make test
+```
+
+You can also use 'black' on the code by running...
+
+```bash
+make black
+```
+
 ## Environment variables
 
 An .env file is required with the following variables...

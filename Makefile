@@ -13,6 +13,9 @@ k8s:
 deploy:
 	skaffold run -f ./k8s/skaffold.yaml
 
+black:
+	docker run --rm -v $(shell pwd):/data cytopia/black src/
+
 test:
 	docker build -t thetrains-test -f ./tests/Dockerfile .
 	docker run thetrains-test
