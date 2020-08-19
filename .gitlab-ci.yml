@@ -14,7 +14,8 @@ test:
     DOCKER_HOST: tcp://docker:2376
     DOCKER_TLS_CERTDIR: "/certs"
   script:
-    - make test
+    - docker build -t thetrains-test -f ./tests/Dockerfile .
+    - docker run thetrains-test
 
 release-collector:
   stage: release
