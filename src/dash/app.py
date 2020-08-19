@@ -2,12 +2,11 @@
 
 """Module to create Flask and Dash applications."""
 
-from decouple import config
 from flask import Flask
 from dash import Dash
 import dash_bootstrap_components as dbc
 
-from common.config import config_dict
+from common.config import Config
 from common.mongo import Mongo
 
 
@@ -20,8 +19,7 @@ def create_flask():
     server = Flask(__package__)
 
     # load default settings
-    conf = config_dict[config("ENV", cast=str, default="local")]
-    server.config.from_object(conf)
+    server.config.from_object(Config)
 
     return server
 
@@ -42,12 +40,11 @@ def create_dash(server):
     )
 
     # Initialise logging
-    conf = config_dict[config("ENV", cast=str, default="local")]
-    conf.init_logging(app.logger)
+    Config.init_logging(app.logger)
     server.logger.removeHandler(app.logger.handlers[0])
 
     # Initialise the mongo database
-    app.mongo = Mongo(app.logger, app.server.config["MG_URI"])
+    app.mongo = Mongo(app.logger, app.server.config["MONGO_URI"])
 
     # Update the Flask config a default "TITLE" and then with any new Dash
     # configuration parameters that might have been updated so that we can

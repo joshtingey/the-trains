@@ -9,36 +9,59 @@ services:
     ports:
       - 27017:27017
     volumes:
-      - thetrains_mongo:/data/db
+      - mongo-volume:/data/db
+    networks:
+      - main-network
 
-  data-collector:
-    container_name: data-collector
+  collector:
+    container_name: collector
     restart: "no"
     build:
-      context: ./
-      dockerfile: ./app/data_collector/Dockerfile
+      context: ./src
+      dockerfile: ./collector/Dockerfile
+    env_file: .env
     depends_on:
       - mongo
+    volumes:
+      - ./src/collector/:/collector/
+      - ./src/common/:/collector/common/
+    networks:
+      - main-network
 
-  graph-generator:
-    container_name: graph-generator
+  generator:
+    container_name: generator
     restart: "no"
     build:
-      context: ./
-      dockerfile: ./app/graph_generator/Dockerfile
+      context: ./src
+      dockerfile: ./generator/Dockerfile
+    env_file: .env
     depends_on:
       - mongo
+    volumes:
+      - ./src/generator/:/generator/
+      - ./src/common/:/generator/common/
+    networks:
+      - main-network
 
-  thetrains-app:
-    container_name: thetrains-app
+  dash:
+    container_name: dash
     restart: "no"
     build:
-      context: ./
-      dockerfile: ./app/thetrains_app/Dockerfile
+      context: ./src
+      dockerfile: ./dash/Dockerfile
     ports:
       - "8000:8000"
+    env_file: .env
     depends_on:
       - mongo
+    volumes:
+      - ./src/dash/:/dash/
+      - ./src/common/:/dash/common/
+    networks:
+      - main-network
 
 volumes:
-  thetrains_mongo:
+  mongo-volume:
+
+networks:
+  main-network:

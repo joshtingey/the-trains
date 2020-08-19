@@ -5,3 +5,7 @@ logs/log.out
 .ipynb_checkpoints/
 TODO
 .env
+src/collector/common/
+src/generator/common/
+src/dash/common/
+.setup.yaml

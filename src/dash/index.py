@@ -7,9 +7,9 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 
-from thetrains_app.app import app
-import thetrains_app.pages.graph as graph_page
-import thetrains_app.pages.ppm as ppm_page
+from app import app
+import pages.graph as graph_page
+import pages.ppm as ppm_page
 
 
 server = app.server

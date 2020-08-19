@@ -14,11 +14,10 @@ import logging
 import asyncio
 import enum
 
-from decouple import config
 import stomp
 import orjson
 
-from common.config import config_dict
+from common.config import Config
 from common.mongo import Mongo
 from known_locations import generate
 
@@ -253,19 +252,22 @@ class STOMPCollector(object):
     https://wiki.openraildata.com/index.php?title=Durable_Subscription
     """
 
-    def __init__(self, mongo, config):
+    def __init__(self, mongo, conn_attempts, nr_user, nr_pass):
         """Initialise the STOMPCollector.
 
         Args:
             mongo (common.mongo.Mongo): database class
             config (common.config.Config): configuration class
+            conn_attempts (int): max number of connection attempts
+            nr_user (str): network rail data feed username
+            nr_pass (str): network rail data feed password
         """
         self.mongo = mongo  # Mongo database
         self.conn = None  # STOMP connection
         self.feeds = {}  # STOMP feed subscriptions
-        self.attempts = config.CONN_ATTEMPTS  # Max number of conn attempts
-        self.nr_user = config.NR_USER  # Network rail username
-        self.nr_pass = config.NR_PASS  # Network rail password
+        self.attempts = conn_attempts
+        self.nr_user = nr_user
+        self.nr_pass = nr_pass
 
         try:  # Setup the STOMP connection to network rail feed
             self.conn = stomp.Connection(
@@ -408,26 +410,25 @@ class STOMPCollector(object):
 def main():
     """Call when data_collector starts."""
     # Setup the configuration and mongo connection
-    conf = config_dict[config("ENV", cast=str, default="local")]
-    conf.init_logging(log)
-    mongo = Mongo(log, conf.MG_URI)
+    Config.init_logging(log)
+    mongo = Mongo(log, Config.MONGO_URI)
 
     # If the db has not been populated with known berths, run now!
     if "BERTHS" not in mongo.client.list_collection_names():
         generate(mongo, log)
 
     # Setup the STOMP national rail data feed collector
-    collector = STOMPCollector(mongo, conf)
+    collector = STOMPCollector(mongo, Config.COLLECTOR_ATTEMPTS, Config.COLLECTOR_NR_USER, Config.COLLECTOR_NR_PASS)
     collector.connect()
 
     # Subscribe to the configured feeds
-    if conf.PPM_FEED:
+    if Config.COLLECTOR_PPM:
         collector.subscribe(Feeds.PPM)
 
-    if conf.TD_FEED:
+    if Config.COLLECTOR_TD:
         collector.subscribe(Feeds.TD)
 
-    if conf.TM_FEED:
+    if Config.COLLECTOR_TM:
         collector.subscribe(Feeds.TM)
 
     while 1:

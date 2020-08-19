@@ -2,75 +2,75 @@
 
 stages:
   - test
-  #- release
-  #- deploy
+  - release
+  - deploy
 
 test:
   stage: test
-  image: python:latest
+  image: docker:19.03.1
+  services:
+    - docker:19.03.1-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
   script:
-    - pip install -r ./app/requirements.txt
-    - pip install -r ./app/common/requirements.txt
-    - pip install -r ./app/data_collector/requirements.txt
-    - pip install -r ./app/graph_generator/requirements.txt
-    - pip install -r ./app/thetrains_app/requirements.txt
-    - export PYTHONPATH=$PYTHONPATH:$(pwd)/app
     - make test
-#release-data-collector:
-#  stage: release
-#  image: docker:19.03.1
-#  services:
-#    - docker:19.03.1-dind
-#  variables:
-#    DOCKER_HOST: tcp://docker:2376
-#    DOCKER_TLS_CERTDIR: "/certs"
-#    DATA_COLLECTOR_IMAGE: $CI_REGISTRY_IMAGE/data-collector:latest
-#  script:
-#    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-#    - docker build -t $DATA_COLLECTOR_IMAGE -f ./app/data_collector/Dockerfile .
-#    - docker push $DATA_COLLECTOR_IMAGE
-#  only:
-#    - master
 
-#release-graph-generator:
-#  stage: release
-#  image: docker:19.03.1
-#  services:
-#    - docker:19.03.1-dind
-#  variables:
-#    DOCKER_HOST: tcp://docker:2376
-#    DOCKER_TLS_CERTDIR: "/certs"
-#    GRAPH_GENERATOR_IMAGE: $CI_REGISTRY_IMAGE/graph-generator:latest
-#  script:
-#    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-#    - docker build -t $GRAPH_GENERATOR_IMAGE -f ./app/graph_generator/Dockerfile .
-#    - docker push $GRAPH_GENERATOR_IMAGE
-#  only:
-#    - master
+release-collector:
+  stage: release
+  image: docker:19.03.1
+  services:
+    - docker:19.03.1-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    COLLECTOR_IMAGE: $CI_REGISTRY_IMAGE/collector:latest
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $COLLECTOR_IMAGE -f ./src/collector/Dockerfile ./src
+    - docker push $COLLECTOR_IMAGE
+  only:
+    - master
 
-#release-thetrains-app:
-#  stage: release
-#  image: docker:19.03.1
-#  services:
-#    - docker:19.03.1-dind
-#  variables:
-#    DOCKER_HOST: tcp://docker:2376
-#    DOCKER_TLS_CERTDIR: "/certs"
-#    THETRAINS_APP_IMAGE: $CI_REGISTRY_IMAGE/thetrains-app:latest
-#  script:
-#    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-#    - docker build -t $THETRAINS_APP_IMAGE -f ./app/thetrains_app/Dockerfile .
-#    - docker push $THETRAINS_APP_IMAGE
-#  only:
-#    - master
-#deploy:
-#  stage: deploy
-#  image: dtzar/helm-kubectl
-#  environment:
-#    name: production
-#    url: https://thetrains.co.uk/
-#  script:
-#    - echo 'DEPLOYING'
-#    - source ./scripts/deploy.sh
-#  only:
-#    - master
+release-generator:
+  stage: release
+  image: docker:19.03.1
+  services:
+    - docker:19.03.1-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    GENERATOR_IMAGE: $CI_REGISTRY_IMAGE/generator:latest
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $GENERATOR_IMAGE -f ./src/generator/Dockerfile ./src
+    - docker push $GENERATOR_IMAGE
+  only:
+    - master
+
+release-dash:
+  stage: release
+  image: docker:19.03.1
+  services:
+    - docker:19.03.1-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DASH_IMAGE: $CI_REGISTRY_IMAGE/dash:latest
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $DASH_IMAGE -f ./src/dash/Dockerfile ./src
+    - docker push $DASH_IMAGE
+  only:
+    - master
+
+deploy:
+  stage: deploy
+  image: dtzar/helm-kubectl
+  environment:
+    name: production
+    url: https://thetrains.co.uk/
+  script:
+    - kubectl apply -f k8s/deployments/
+  only:
+    - master

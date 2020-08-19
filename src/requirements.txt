@@ -1,0 +1,7 @@
+pytest==6.0.1
+pytest-pydocstyle==2.2.0
+pytest-flake8==1.0.6
+pytest-black==0.3.10
+black==19.10b0 
+jupyterlab==2.2.4
+matplotlib==3.3.1

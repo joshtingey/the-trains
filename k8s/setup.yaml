@@ -1,0 +1,192 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: thetrains
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gitlab-admin
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: gitlab-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: gitlab-admin
+    namespace: kube-system
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: thetrains-config
+  namespace: thetrains
+data:
+  LOG_LEVEL: "INFO"
+  MONGO_INITDB_ROOT_USERNAME: "example"
+  MONGO_INITDB_ROOT_PASSWORD: "example"
+  COLLECTOR_NR_USER: "example"
+  COLLECTOR_NR_PASS: "example"
+  COLLECTOR_ATTEMPTS: "5"
+  COLLECTOR_PPM: "True"
+  COLLECTOR_TD: "True"
+  COLLECTOR_TM: "False"
+  GENERATOR_UPDATE_RATE: "3600"
+  GENERATOR_K: "0.0001"
+  GENERATOR_ITERATIONS: "5000"
+  DASH_MAPBOX_TOKEN: "example"
+
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: <example>
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-staging
+    # Enable the HTTP-01 challenge provider
+    solvers:
+      - http01:
+          ingress:
+            class: nginx
+
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: <example>
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    # Enable the HTTP-01 challenge provider
+    solvers:
+      - http01:
+          ingress:
+            class: nginx
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dash
+  namespace: thetrains
+  labels:
+    app: dash
+spec:
+  selector:
+    app: dash
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: dash
+  namespace: thetrains
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod" # Can comment this out for no certificates
+spec:
+  tls:
+    - hosts:
+        - <example>
+      secretName: dash-tls
+  rules:
+    - host: <example>
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: dash
+              servicePort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+  namespace: thetrains
+  labels:
+    app: mongo
+spec:
+  type: NodePort
+  ports:
+    - port: 27017
+  selector:
+    app: mongo
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-pvc
+  namespace: thetrains
+  labels:
+    app: mongo
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: microk8s-hostpath
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo
+  namespace: thetrains
+  labels:
+    app: mongo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      containers:
+        - name: mongo
+          image: mongo:latest
+          envFrom:
+            - configMapRef:
+                name: thetrains-config
+          ports:
+            - containerPort: 27017
+              name: mongo
+          volumeMounts:
+            - name: mongo-volume
+              mountPath: /data/db
+      volumes:
+        - name: mongo-volume
+          persistentVolumeClaim:
+            claimName: mongo-pvc

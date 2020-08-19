@@ -15,36 +15,31 @@ Currently the deployment consists of 4 containers...
 First a .env file is required, see below. Then to start all the containers run...
 
 ```bash
-make docker_up
+make up
 ```
 
 You can then view the dash application at localhost:8000. To then stop all the container run...
 
 ```bash
-make docker_down
+make down
 ```
 
 ## Deploy to Kubernetes Cluster
 
-First a .env file is required, see below. Also, you need to have a cluster set up and accessible with kubectl
+First the ./k8s/setup.yaml file needs to be modified for the cluster setup. You will need both
+kubectl and [skaffold](https://skaffold.dev/) for this.
 
 To run the initial cluster setup run...
 
 ```bash
-source k8s/setup.sh
+make k8s
 ```
 
-This sets up the namespace, certificates and the application service and ingress.
-To build and push the containers to the container repository run...
+This sets up the namespace, configuration, certificates and the application service and ingress.
+To build and push the containers to the container repository and then deploy to the cluster run...
 
 ```bash
-skaffold build
-```
-
-To deploy everything run...
-
-```bash
-skaffold deploy
+make deploy
 ```
 
 To continuously build and deploy to the cluster while you make changes run...
@@ -59,24 +54,19 @@ An .env file is required with the following variables...
 
 | Variable name              | Type | Description                                 |
 | -------------------------- | ---- | ------------------------------------------- |
-| ENV                        | str  | Which env to use (local, docker, prod)      |
 | LOG_LEVEL                  | str  | logging verbosity level (DEBUG, INFO)       |
 | MONGO_INITDB_ROOT_USERNAME | str  | MongoDB username                            |
 | MONGO_INITDB_ROOT_PASSWORD | str  | MongoDB password                            |
-| NR_USER_DEV                | str  | Network rail feed dev username              |
-| NR_PASS_DEV                | str  | Network rail feed dev password              |
-| NR_USER_PROD               | str  | Network rail feed prod username             |
-| NR_PASS_PROD               | str  | Network rail feed prod password             |
-| MAPBOX_TOKEN               | str  | Mapbox account token                        |
-| CONN_ATTEMPTS              | int  | Number of STOMP connection attempts to make |
-| PPM_FEED                   | bool | Should PPM feed data be collected           |
-| TD_FEED                    | bool | Should TD feed data be collected            |
-| TM_FEED                    | bool | Should TM feed data be collected            |
-| GRAPH_UPDATE_RATE          | int  | Update rate of network graph in seconds     |
-| GRAPH_K                    | int  | Layout k coefficient for graph generation   |
-| GRAPH_ITERATIONS           | int  | Layout iterations for graph generation      |
-| CERT_EMAIL                 | str  | Email for certificate generation            |
-| DOMAIN                     | str  | Domain name for application                 |
+| COLLECTOR_NR_USER          | str  | Network rail feed username                  |
+| COLLECTOR_NR_PASS          | str  | Network rail feed password                  |
+| DASH_MAPBOX_TOKEN          | str  | Mapbox account token                        |
+| COLLECTOR_ATTEMPTS         | int  | Number of STOMP connection attempts to make |
+| COLLECTOR_PPM              | bool | Should PPM feed data be collected           |
+| COLLECTOR_TD               | bool | Should TD feed data be collected            |
+| COLLECTOR_TM               | bool | Should TM feed data be collected            |
+| GENERATOR_UPDATE_RATE      | int  | Update rate of network graph in seconds     |
+| GENERATOR_K                | int  | Layout k coefficient for graph generation   |
+| GENERATOR_ITERATIONS       | int  | Layout iterations for graph generation      |
 
 See .env.example for an example
 

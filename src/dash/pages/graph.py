@@ -8,7 +8,7 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 import plotly.graph_objects as go
 
-from thetrains_app.app import app
+from app import app
 
 
 def get_graph_map():
@@ -54,7 +54,7 @@ def get_graph_map():
         hovermode="closest",
         showlegend=False,
         mapbox=dict(
-            accesstoken=app.server.config["MAPBOX_TOKEN"],
+            accesstoken=app.server.config["DASH_MAPBOX_TOKEN"],
             style="streets",
             pitch=0,
             zoom=10,

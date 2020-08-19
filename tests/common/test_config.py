@@ -47,12 +47,6 @@ def test_local_attributes():
     check_extra_attributes(local_config)
 
 
-def test_docker_attributes():
-    docker_config = common.config.DockerConfig()
-    check_base_attributes(docker_config)
-    check_extra_attributes(docker_config)
-
-
 def test_prod_attributes():
     prod_config = common.config.ProdConfig()
     check_base_attributes(prod_config)

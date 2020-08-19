@@ -9,9 +9,8 @@ import logging
 import functools
 
 import networkx as nx
-from decouple import config
 
-from common.config import config_dict
+from common.config import Config
 from common.mongo import Mongo
 
 
@@ -178,17 +177,16 @@ def main():
     signal.signal(signal.SIGTERM, exit_handler)
 
     # Setup the configuration and mongo connection
-    conf = config_dict[config("ENV", cast=str, default="local")]
-    conf.init_logging(log)
-    mongo = Mongo(log, conf.MG_URI)
+    Config.init_logging(log)
+    mongo = Mongo(log, Config.MONGO_URI)
 
     # Create the graph generator
-    gen = GraphGenerator(log, mongo, conf.GRAPH_K, conf.GRAPH_ITERATIONS)
+    gen = GraphGenerator(log, mongo, Config.GENERATOR_K, Config.GENERATOR_ITERATIONS)
 
     # Run the graph generator in a loop, run every GRAPH_UPDATE_RATE seconds
     while 1:
         gen.run()
-        time.sleep(conf.GRAPH_UPDATE_RATE)
+        time.sleep(Config.GENERATOR_UPDATE_RATE)
 
 
 if __name__ == "__main__":
