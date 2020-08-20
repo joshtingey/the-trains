@@ -37,7 +37,8 @@ deploy:
     - curl -Lo skaffold https://storage.googleapis.com/skaffold/builds/latest/skaffold-linux-amd64
     - chmod +x skaffold
     # Check kubectl works
-    - kubectl get nodes
+    - echo "KUBECONFIG:"
+    - echo $KUBECONFIG
     # Deploy with skaffold
     - ./skaffold run -f ./k8s/skaffold.yaml
   only:
