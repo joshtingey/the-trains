@@ -24,7 +24,11 @@ test:
 deploy:
   stage: deploy
   script:
+    # Get the latest versions so we can use in the build cache
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull $CI_REGISTRY_IMAGE/collector:latest || true
+    - docker pull $CI_REGISTRY_IMAGE/generator:latest || true
+    - docker pull $CI_REGISTRY_IMAGE/collector:latest || true
     # Install dependencies
     - apk add --update --no-cache curl git
     - curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
@@ -32,6 +36,8 @@ deploy:
     - mv ./kubectl /usr/local/bin/kubectl
     - curl -Lo skaffold https://storage.googleapis.com/skaffold/builds/latest/skaffold-linux-amd64
     - chmod +x skaffold
+    # Check kubectl works
+    - kubectl get nodes
     # Deploy with skaffold
     - ./skaffold run -f ./k8s/skaffold.yaml
   only:
