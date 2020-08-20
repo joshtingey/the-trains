@@ -1,77 +1,58 @@
 # .gitlab-ci.yml
 
+image: docker:19.03.12
+
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"
+
+services:
+  - docker:19.03.12-dind
+
+before_script:
+  - docker info
+
 stages:
   - test
-  - release
+  - build
   - deploy
 
 test:
   stage: test
-  image: docker:19.03.1
-  services:
-    - docker:19.03.1-dind
-  variables:
-    DOCKER_HOST: tcp://docker:2376
-    DOCKER_TLS_CERTDIR: "/certs"
   script:
     - docker build -t thetrains-test -f ./tests/Dockerfile .
     - docker run thetrains-test
 
-release-collector:
-  stage: release
-  image: docker:19.03.1
-  services:
-    - docker:19.03.1-dind
-  variables:
-    DOCKER_HOST: tcp://docker:2376
-    DOCKER_TLS_CERTDIR: "/certs"
-    COLLECTOR_IMAGE: $CI_REGISTRY_IMAGE/collector:latest
+build:
+  stage: build
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $COLLECTOR_IMAGE -f ./src/collector/Dockerfile ./src
-    - docker push $COLLECTOR_IMAGE
-  only:
-    - master
-
-release-generator:
-  stage: release
-  image: docker:19.03.1
-  services:
-    - docker:19.03.1-dind
-  variables:
-    DOCKER_HOST: tcp://docker:2376
-    DOCKER_TLS_CERTDIR: "/certs"
-    GENERATOR_IMAGE: $CI_REGISTRY_IMAGE/generator:latest
-  script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $GENERATOR_IMAGE -f ./src/generator/Dockerfile ./src
-    - docker push $GENERATOR_IMAGE
-  only:
-    - master
-
-release-dash:
-  stage: release
-  image: docker:19.03.1
-  services:
-    - docker:19.03.1-dind
-  variables:
-    DOCKER_HOST: tcp://docker:2376
-    DOCKER_TLS_CERTDIR: "/certs"
-    DASH_IMAGE: $CI_REGISTRY_IMAGE/dash:latest
-  script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $DASH_IMAGE -f ./src/dash/Dockerfile ./src
-    - docker push $DASH_IMAGE
+    # Install dependencies
+    - apk add --update --no-cache curl git
+    - curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
+    - chmod +x ./kubectl
+    - mv ./kubectl /usr/local/bin/kubectl
+    - curl -Lo skaffold https://storage.googleapis.com/skaffold/builds/latest/skaffold-linux-amd64
+    - chmod +x skaffold
+    # Build images
+    - ./skaffold build -f ./k8s/skaffold.yaml
   only:
     - master
 
 deploy:
   stage: deploy
-  image: dtzar/helm-kubectl
   environment:
     name: production
     url: https://thetrains.co.uk/
   script:
-    - kubectl apply -f k8s/deployments/
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    # Install dependencies
+    - apk add --update --no-cache curl git
+    - curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
+    - chmod +x ./kubectl
+    - mv ./kubectl /usr/local/bin/kubectl
+    - curl -Lo skaffold https://storage.googleapis.com/skaffold/builds/latest/skaffold-linux-amd64
+    - chmod +x skaffold
+    # Build images
+    - ./skaffold deploy -f ./k8s/skaffold.yaml
   only:
     - master
