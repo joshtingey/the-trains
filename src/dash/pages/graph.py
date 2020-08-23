@@ -79,7 +79,8 @@ def body():
                 dbc.Col(
                     dbc.Card(
                         "This map displays the generated 'graph' of the UK rail network. \
-                            Red markers indicate a current train location.",
+                            Red markers indicate a current train location. \
+                            It is updated every 30 seconds.",
                         body=True,
                     ),
                     width={"size": 6, "offset": 3},

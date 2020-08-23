@@ -27,8 +27,9 @@ class Config(object):
 
     # Generator configuration
     GENERATOR_UPDATE_RATE = config("GENERATOR_UPDATE_RATE", cast=int, default=3600)
-    GENERATOR_K = config("GENERATOR_K", cast=float, default=0.0001)
+    GENERATOR_K = config("GENERATOR_K", cast=float, default=0.00001)
     GENERATOR_ITERATIONS = config("GENERATOR_ITERATIONS", cast=int, default=5000)
+    GENERATOR_CUT_DISTANCE = config("GENERATOR_CUT_DISTANCE", cast=float, default=500)
 
     # Dash configuration
     DASH_MAPBOX_TOKEN = config("DASH_MAPBOX_TOKEN", default="token")

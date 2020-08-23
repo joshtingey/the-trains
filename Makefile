@@ -1,4 +1,9 @@
+default: build
+
 up:
+	docker-compose up -d --remove-orphans
+
+build:
 	docker-compose up --build -d --remove-orphans
 
 down:
@@ -14,8 +19,10 @@ deploy:
 	skaffold run -f ./k8s/skaffold.yaml
 
 black:
-	docker run --rm -v $(shell pwd):/data cytopia/black src/
+	black src/ tests/
 
 test:
-	docker build -t thetrains-test -f ./tests/Dockerfile .
-	docker run thetrains-test
+	pytest --pydocstyle --flake8 --black -v -W ignore::pytest.PytestDeprecationWarning .
+
+jupyter:
+	jupyter-lab --ip=0.0.0.0 --allow-root

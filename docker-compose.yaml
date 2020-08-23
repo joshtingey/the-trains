@@ -22,9 +22,6 @@ services:
     env_file: .env
     depends_on:
       - mongo
-    volumes:
-      - ./src/collector/:/collector/
-      - ./src/common/:/collector/common/
     networks:
       - main-network
 
@@ -37,11 +34,12 @@ services:
     env_file: .env
     depends_on:
       - mongo
-    volumes:
-      - ./src/generator/:/generator/
-      - ./src/common/:/generator/common/
     networks:
       - main-network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
 
   dash:
     container_name: dash
@@ -54,9 +52,6 @@ services:
     env_file: .env
     depends_on:
       - mongo
-    volumes:
-      - ./src/dash/:/dash/
-      - ./src/common/:/dash/common/
     networks:
       - main-network
 

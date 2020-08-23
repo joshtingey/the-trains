@@ -17,7 +17,7 @@ RUN pip install -r requirements.txt \
     --no-cache-dir
 
 # Copy code
-COPY tests/setup.cfg ./
+COPY setup.cfg ./
 COPY src/common/ common/
 COPY src/collector/ collector/
 COPY src/generator/ generator/

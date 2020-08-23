@@ -18,8 +18,24 @@ def check_base_attributes(config):
         "GENERATOR_UPDATE_RATE",
         "GENERATOR_K",
         "GENERATOR_ITERATIONS",
+        "GENERATOR_CUT_DISTANCE",
     ]
-    types = [str, str, str, str, str, str, int, bool, bool, bool, int, float, int]
+    types = [
+        str,
+        str,
+        str,
+        str,
+        str,
+        str,
+        int,
+        bool,
+        bool,
+        bool,
+        int,
+        float,
+        int,
+        float,
+    ]
     errors = []
     for i, attribute in enumerate(attributes):
         if not hasattr(config, attribute):
