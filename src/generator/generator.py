@@ -7,6 +7,7 @@ import signal
 import time
 import logging
 import functools
+import math
 
 import networkx as nx
 
@@ -35,7 +36,7 @@ def timer(func):
 class GraphGenerator(object):
     """Graph generator class to approximate train network locations."""
 
-    def __init__(self, log, mongo, k, iterations):
+    def __init__(self, log, mongo, k, iterations, cut_distance):
         """Initialise GraphGenerator.
 
         Args:
@@ -48,6 +49,7 @@ class GraphGenerator(object):
         self.mongo = mongo
         self.k = k
         self.iterations = iterations
+        self.cut_distance = cut_distance
         self.log.info("k: {}, iterations: {}".format(self.k, self.iterations))
 
     def run(self):
@@ -55,7 +57,7 @@ class GraphGenerator(object):
         self.log.info("Starting graph generation at {}".format(time.ctime()))
         if not self.get_berths():
             return
-        if not self.clean_nodes():
+        if not self.clean_graph():
             return
         if not self.run_layout():
             return
@@ -97,25 +99,73 @@ class GraphGenerator(object):
 
         return True
 
-    @timer
-    def clean_nodes(self):
-        """Remove all nodes that should not be considered when calculating the layout."""
-        # Remove all isolated nodes from the graph
-        self.graph.remove_nodes_from(list(nx.isolates(self.graph)))
-
-        # Just select nodes that lie between fixed nodes
-        known = dict(
-            (n, d["fixed"]) for n, d in self.graph.nodes().items() if d["fixed"] is True
-        )
-        c_score = nx.algorithms.betweenness_centrality_subset(
-            self.graph, list(known.keys()), list(known.keys())
-        )
-        nodes_between = [x for x in c_score if c_score[x] != 0.0]
-        nodes_between.extend(list(known.keys()))  # Add on fixed nodes
-
-        self.graph = self.graph.subgraph(nodes_between)
+    def clean_graph(self):
+        """Clean the graph to remove nodes/edges to not be considered in the layout."""
+        self.remove_isolated_nodes()
+        self.remove_duplicate_locations()
+        self.remove_distant_nodes()
+        self.remove_floating_nodes()
         self.log.info("Nodes remaining after cleaning {}".format(len(self.graph.nodes)))
         return True
+
+    @timer
+    def remove_isolated_nodes(self):
+        """Remove isolated nodes from the graph."""
+        self.graph.remove_nodes_from(list(nx.isolates(self.graph)))
+
+    @timer
+    def remove_duplicate_locations(self):
+        """Combine fixed nodes that have the same location."""
+        fixed = [n for n, d in self.graph.nodes().items() if d["fixed"] is True]
+        combine = {}
+        for base_node in fixed:
+            combine[base_node] = []
+            for other_node in fixed:
+                if (
+                    self.graph.nodes[base_node]["lon"]
+                    == self.graph.nodes[other_node]["lon"]
+                    and self.graph.nodes[base_node]["lat"]
+                    == self.graph.nodes[other_node]["lat"]
+                ):
+                    combine[base_node].append(other_node)
+
+        for base_node, combine_list in combine.items():
+            for combine_node in combine_list:
+                try:
+                    lon = self.graph.nodes[base_node]["lon"]
+                    lat = self.graph.nodes[base_node]["lat"]
+                    self.graph = nx.contracted_nodes(
+                        self.graph, base_node, combine_node, self_loops=False
+                    )
+                    self.graph.nodes[base_node]["fixed"] = True
+                    self.graph.nodes[base_node]["lon"] = lon
+                    self.graph.nodes[base_node]["lat"] = lat
+                except Exception:
+                    pass
+
+    @timer
+    def remove_distant_nodes(self):
+        """Remove linked fixed nodes that are distant from one another."""
+        for edge in self.graph.edges:
+            node_0 = self.graph.nodes[edge[0]]
+            node_1 = self.graph.nodes[edge[1]]
+            if node_0["fixed"] is True and node_1["fixed"] is True:
+                distance = math.sqrt(
+                    math.pow(node_0["lat"] - node_1["lat"], 2)
+                    + math.pow(node_0["lon"] - node_1["lon"], 2)
+                )
+                if distance >= self.cut_distance:
+                    # self.log.debug(distance)
+                    self.graph.remove_edge(edge[0], edge[1])
+
+    @timer
+    def remove_floating_nodes(self):
+        """Remove nodes that do not lie between fixed nodes."""
+        known = [n for n, d in self.graph.nodes().items() if d["fixed"] is True]
+        c_score = nx.algorithms.betweenness_centrality_subset(self.graph, known, known)
+        nodes_between = [x for x in c_score if c_score[x] != 0.0]
+        nodes_between.extend(known)  # Add on fixed nodes
+        self.graph = self.graph.subgraph(nodes_between)
 
     @timer
     def run_layout(self):
@@ -181,7 +231,13 @@ def main():
     mongo = Mongo(log, Config.MONGO_URI)
 
     # Create the graph generator
-    gen = GraphGenerator(log, mongo, Config.GENERATOR_K, Config.GENERATOR_ITERATIONS)
+    gen = GraphGenerator(
+        log,
+        mongo,
+        Config.GENERATOR_K,
+        Config.GENERATOR_ITERATIONS,
+        Config.GENERATOR_CUT_DISTANCE,
+    )
 
     # Run the graph generator in a loop, run every GRAPH_UPDATE_RATE seconds
     while 1:
