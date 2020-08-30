@@ -11,7 +11,8 @@ ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
 # Install needed packages and setup non-root user.
-COPY .devcontainer/library-scripts/*.sh /tmp/library-scripts/
+COPY .devcontainer/common-debian.sh /tmp/library-scripts/
+COPY .devcontainer/docker-debian.sh /tmp/library-scripts/
 RUN apt-get update \
     && /bin/bash /tmp/library-scripts/common-debian.sh "${INSTALL_ZSH}" "${USERNAME}" "${USER_UID}" "${USER_GID}" "${UPGRADE_PACKAGES}" \
     # Use Docker script from script library to set things up
@@ -30,6 +31,9 @@ RUN curl -sSL -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernete
 # Install skaffold
 RUN curl -Lo skaffold https://storage.googleapis.com/skaffold/builds/latest/skaffold-linux-amd64 \
     && mv skaffold /usr/local/bin/skaffold && chmod +x /usr/local/bin/skaffold
+
+# Install Helm
+RUN curl -s https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash -
 
 # Install pip requirements
 COPY src/requirements.txt /tmp/pip-tmp/requirements_0.txt
