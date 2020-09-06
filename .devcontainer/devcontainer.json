@@ -8,7 +8,7 @@
     ],
     "runArgs": [
         "--network",
-        "the-trains_main-network"
+        "host"
     ],
     "settings": {
         "terminal.integrated.shell.linux": "/bin/bash",
