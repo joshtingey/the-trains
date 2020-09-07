@@ -21,6 +21,8 @@
         "ms-python.python",
         "ms-python.vscode-pylance",
         "ms-kubernetes-tools.vscode-kubernetes-tools",
-        "eamodio.gitlens"
-    ]
+        "eamodio.gitlens",
+        "davidanson.vscode-markdownlint"
+    ],
+    "forwardPorts":[8000]
 }

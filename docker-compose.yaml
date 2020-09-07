@@ -36,10 +36,6 @@ services:
       - mongo
     networks:
       - main-network
-    deploy:
-      resources:
-        limits:
-          cpus: "0.50"
 
   dash:
     container_name: dash
