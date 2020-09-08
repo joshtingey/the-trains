@@ -10,12 +10,6 @@
         "--network",
         "host"
     ],
-    "settings": {
-        "terminal.integrated.shell.linux": "/bin/bash",
-        "vs-kubernetes": {
-            "vs-kubernetes.helm-path.linux": "/usr/local/bin/helm"
-        },
-    },
     "extensions": [
         "ms-azuretools.vscode-docker",
         "ms-python.python",
@@ -24,5 +18,11 @@
         "eamodio.gitlens",
         "davidanson.vscode-markdownlint"
     ],
+    "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash",
+        "vs-kubernetes": {
+            "vs-kubernetes.helm-path.linux": "/usr/local/bin/helm"
+        }
+    },
     "forwardPorts":[8000]
 }

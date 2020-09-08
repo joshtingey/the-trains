@@ -140,7 +140,8 @@ class GraphGenerator(object):
                     self.graph.nodes[base_node]["fixed"] = True
                     self.graph.nodes[base_node]["lon"] = lon
                     self.graph.nodes[base_node]["lat"] = lat
-                except Exception:
+                except Exception as e:
+                    self.log.debug("Already passed {}".format(e))
                     pass
 
     @timer
