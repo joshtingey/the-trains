@@ -52,8 +52,8 @@ RUN pip3 --disable-pip-version-check --no-cache-dir install \
 # Add to PYTHONPATH
 ENV PYTHONPATH=/workspaces/the-trains:${PYTHONPATH}
 ENV PYTHONPATH=/workspaces/the-trains/src:${PYTHONPATH}
-ENV PYTHONPATH=/root/workspaces/the-trains:${PYTHONPATH}
-ENV PYTHONPATH=/root/workspaces/the-trains/src:${PYTHONPATH}
+ENV PYTHONPATH=/root/workspace/the-trains:${PYTHONPATH}
+ENV PYTHONPATH=/root/workspace/the-trains/src:${PYTHONPATH}
 
 # Setting the ENTRYPOINT to docker-init.sh will configure non-root access to 
 # the Docker socket if "overrideCommand": false is set in devcontainer.json. 
