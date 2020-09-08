@@ -50,10 +50,10 @@ RUN pip3 --disable-pip-version-check --no-cache-dir install \
     && rm -rf /tmp/pip-tmp
 
 # Add to PYTHONPATH
-RUN echo "export PYTHONPATH=$PYTHONPATH:/workspaces/the-trains" | tee -a /root/.bashrc >> /root/.zshrc
-RUN echo "export PYTHONPATH=$PYTHONPATH:/workspaces/the-trains/src" | tee -a /root/.bashrc >> /root/.zshrc
-RUN echo "export PYTHONPATH=$PYTHONPATH:/root/workspaces/the-trains" | tee -a /root/.bashrc >> /root/.zshrc
-RUN echo "export PYTHONPATH=$PYTHONPATH:/root/workspaces/the-trains/src" | tee -a /root/.bashrc >> /root/.zshrc
+ENV PYTHONPATH=/workspaces/the-trains:${PYTHONPATH}
+ENV PYTHONPATH=/workspaces/the-trains/src:${PYTHONPATH}
+ENV PYTHONPATH=/root/workspaces/the-trains:${PYTHONPATH}
+ENV PYTHONPATH=/root/workspaces/the-trains/src:${PYTHONPATH}
 
 # Setting the ENTRYPOINT to docker-init.sh will configure non-root access to 
 # the Docker socket if "overrideCommand": false is set in devcontainer.json. 
