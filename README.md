@@ -1,33 +1,39 @@
 # thetrains
 
-[![Pipeline](https://gitlab.com/JoshTingey/the-trains/badges/master/pipeline.svg)](https://gitlab.com/JoshTingey/the-trains/pipelines) [![Website](https://img.shields.io/website-up-down-green-red/http/shields.io.svg)](https://thetrains.co.uk/) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/94593ef8ea534d63912e073584a91932)](https://www.codacy.com/manual/joshtingey93/the-trains?utm_source=gitlab.com&amp;utm_medium=referral&amp;utm_content=JoshTingey/the-trains&amp;utm_campaign=Badge_Grade)
+[![Website](https://img.shields.io/website-up-down-green-red/http/shields.io.svg)](https://thetrains.co.uk/)
+[![Pipeline](https://gitlab.com/JoshTingey/the-trains/badges/master/pipeline.svg)](https://gitlab.com/JoshTingey/the-trains/pipelines)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-A personal project to produce a web based dash(flask) application to display the results of train related data analysis. The website for this code is at [https://thetrains.co.uk/](https://thetrains.co.uk/). 
+A personal project to gather, explore, analyse and present train-related data collected primarily from the [Network Rail data feeds](https://wiki.openraildata.com/index.php?title=Main_Page). Furthermore, a `graph' of the UK rail network is generated and then presented using a [Dash](https://plotly.com/dash/)([Flask](https://flask.palletsprojects.com/en/1.1.x/)) application. The live website for this project is at [thetrains.co.uk](https://thetrains.co.uk/).
 
-Currently the deployment consists of 4 containers...
-1.  MongoDB database - persists all data
-2.  Data collector - collects data from the Network Rail data feeds
-3.  Graph generator - creates rail network 'graph' from berth-level data and runs Fruchterman-Reingold force-directed algorithm for positions
-4.  Dash app - dash application frontend to display the graph etc...
+Currently, the deployment consists of 4 containers:
+
+1. mongo - MongoDB database to persist all data
+2. collector - Gathers data from the Network Rail data feeds
+3. generator - Generates a UK rail network 'graph' from berth-level data and runs Fruchterman-Reingold force-directed algorithm for position estimation
+4. dash - Dash application frontend to display the generated graph and other analysis
+
+The [wiki](https://github.com/joshtingey/the-trains/wiki) contains detailed information on the projects inner workings.
+
+All code is replicated across both a [github](https://github.com/joshtingey/the-trains) and [gitlab](https://gitlab.com/JoshTingey/the-trains) repository with the later being used to run the ci/cd pipeline.
 
 ## Develop locally with docker-compose
 
-First a .env file is required, see below. Then to start all the containers run...
+First, a .env file containing all the required environment variables is needed. See .env.example for an example, it is recommended to modify this and rename to .env. Then to start all the containers locally run...
 
 ```bash
 make up
 ```
 
-You can then view the dash application at localhost:8000. To then stop all the container run...
+You can then view the dash application at localhost:8000. To then stop all the containers run...
 
 ```bash
 make down
 ```
 
-## Deploy to Kubernetes Cluster
+## Deploy to Kubernetes cluster
 
-First the ./k8s/setup.yaml file needs to be modified for the cluster setup. You will need both
-kubectl and [skaffold](https://skaffold.dev/) for this.
+First, the ./k8s/setup.yaml file needs to be modified for the cluster setup. Additionally, You will need both kubectl and [skaffold](https://skaffold.dev/) for this.
 
 To run the initial cluster setup run...
 
@@ -60,34 +66,4 @@ You can also use 'black' on the code by running...
 
 ```bash
 make black
-```
-
-## Environment variables
-
-An .env file is required with the following variables...
-
-| Variable name              | Type | Description                                 |
-| -------------------------- | ---- | ------------------------------------------- |
-| LOG_LEVEL                  | str  | logging verbosity level (DEBUG, INFO)       |
-| MONGO_INITDB_ROOT_USERNAME | str  | MongoDB username                            |
-| MONGO_INITDB_ROOT_PASSWORD | str  | MongoDB password                            |
-| COLLECTOR_NR_USER          | str  | Network rail feed username                  |
-| COLLECTOR_NR_PASS          | str  | Network rail feed password                  |
-| DASH_MAPBOX_TOKEN          | str  | Mapbox account token                        |
-| COLLECTOR_ATTEMPTS         | int  | Number of STOMP connection attempts to make |
-| COLLECTOR_PPM              | bool | Should PPM feed data be collected           |
-| COLLECTOR_TD               | bool | Should TD feed data be collected            |
-| COLLECTOR_TM               | bool | Should TM feed data be collected            |
-| GENERATOR_UPDATE_RATE      | int  | Update rate of network graph in seconds     |
-| GENERATOR_K                | int  | Layout k coefficient for graph generation   |
-| GENERATOR_ITERATIONS       | int  | Layout iterations for graph generation      |
-
-See .env.example for an example
-
-## Checking the mongodb database
-
-```bash
-mongo --username <MONGO_INITDB_ROOT_USERNAME> --password <MONGO_INITDB_ROOT_PASSWORD> --authenticationDatabase admin
-use thetrains
-db.BERTHS.find()  # To display all BERTH documents
 ```
