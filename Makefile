@@ -25,4 +25,4 @@ test:
 	pytest --pydocstyle --flake8 --black -v -W ignore::pytest.PytestDeprecationWarning .
 
 jupyter:
-	jupyter-lab --ip=0.0.0.0 --allow-root
+	jupyter-lab --ip=0.0.0.0 --allow-root --port 8890

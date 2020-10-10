@@ -13,13 +13,13 @@ import datetime
 import logging
 import asyncio
 import enum
+import json
 
 import stomp
 import orjson
 
 from common.config import Config
 from common.mongo import Mongo
-from known_locations import generate
 
 
 log = logging.getLogger("data_collector")
@@ -407,6 +407,21 @@ class STOMPCollector(object):
         sys.exit(0)
 
 
+def load_berths(mongo):
+    """Load static berths data into mongo database.
+
+    Args:
+        mongo (common.mongo.Mongo): database class
+    """
+    with open("./berths.json") as berths_file:
+        berths_data = json.load(berths_file)
+        for key, set_data in berths_data.items():
+            # Add to the database
+            mongo.client["BERTHS"].update_one(
+                {"NAME": key}, {"$set": set_data}, upsert=True
+            )
+
+
 def main():
     """Call when data_collector starts."""
     # Setup the configuration and mongo connection
@@ -415,7 +430,8 @@ def main():
 
     # If the db has not been populated with known berths, run now!
     if "BERTHS" not in mongo.client.list_collection_names():
-        generate(mongo, log)
+        log.info("Loading known berths into database...")
+        load_berths(mongo)
 
     # Setup the STOMP national rail data feed collector
     collector = STOMPCollector(
