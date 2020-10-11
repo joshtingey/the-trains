@@ -20,7 +20,7 @@ class Mongo(object):
 
     @classmethod
     def connect(cls, log, uri):
-        """Connect to database, return None if not possible"""
+        """Connect to database, return None if not possible."""
         try:
             client = MongoClient(uri)
             client = client.thetrains  # Using thetrains database
