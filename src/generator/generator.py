@@ -81,7 +81,7 @@ class GraphGenerator(object):
 
         # Loop through all berths and add nodes and edges to the graph
         for berth in berths:
-            if "FIXED" in list(berth.keys()):
+            if berth["FIXED"]:
                 self.graph.add_node(
                     berth["NAME"],
                     lon=berth["LONGITUDE"] * 100000,
@@ -229,7 +229,10 @@ def main():
 
     # Setup the configuration and mongo connection
     Config.init_logging(log)
-    mongo = Mongo(log, Config.MONGO_URI)
+    mongo = Mongo.connect(log, Config.MONGO_URI)
+
+    if mongo is None:
+        raise ConnectionError
 
     # Create the graph generator
     gen = GraphGenerator(

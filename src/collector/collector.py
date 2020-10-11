@@ -167,6 +167,7 @@ class TDFeed(StompFeed):
                         "LATEST_TIME": time,
                     },
                     "$addToSet": {"CONNECTIONS": to_name},
+                    "$setOnInsert": {"FIXED": False},
                 }
 
                 to_update = {
@@ -175,7 +176,8 @@ class TDFeed(StompFeed):
                         "BERTH": to_berth,
                         "LATEST_DESCR": descr,
                         "LATEST_TIME": time,
-                    }
+                    },
+                    "$setOnInsert": {"FIXED": False},
                 }
 
                 if self.mongo is not None:
@@ -307,7 +309,6 @@ class STOMPCollector(object):
             time.sleep(pow(attempt, 2))  # Exponential backoff in wait
 
             try:  # Attempt STOMP connection to Network Rail
-                log.info("Using {}:{}".format(self.nr_user, self.nr_pass))
                 if self.conn is not None:
                     self.conn.connect(
                         username=self.nr_user,
@@ -407,33 +408,21 @@ class STOMPCollector(object):
         sys.exit(0)
 
 
-def load_berths(mongo):
-    """Load static berths data into mongo database.
-
-    Args:
-        mongo (common.mongo.Mongo): database class
-    """
-    with open("./berths.json") as berths_file:
-        berths_data = json.load(berths_file)
-        for key, set_data in berths_data.items():
-            # Add to the database
-            mongo.client["BERTHS"].update_one(
-                {"NAME": key}, {"$set": set_data}, upsert=True
-            )
-
-
 def main():
     """Call when data_collector starts."""
     # Setup the configuration and mongo connection
     Config.init_logging(log)
-    mongo = Mongo(log, Config.MONGO_URI)
+    mongo = Mongo.connect(log, Config.MONGO_URI)
 
-    # If the db has not been populated with known berths, run now!
-    if "BERTHS" not in mongo.client.list_collection_names():
-        log.info("Loading known berths into database...")
-        load_berths(mongo)
+    #  Populate database with known berths if not already there
+    if mongo is not None and "BERTHS" not in mongo.collections():
+        log.info("Loading known berths into database")
+        with open("./berths.json") as berths_file:
+            berths_data = json.load(berths_file)
+            for key, set_data in berths_data.items():
+                mongo.update("BERTHS", {"NAME": key}, {"$set": set_data})
 
-    # Setup the STOMP national rail data feed collector
+    # Setup the STOMP national rail data feed collector and connect
     collector = STOMPCollector(
         mongo,
         Config.COLLECTOR_ATTEMPTS,
@@ -452,6 +441,7 @@ def main():
     if Config.COLLECTOR_TM:
         collector.subscribe(Feeds.TM)
 
+    # Infinite loop
     while 1:
         time.sleep(1)
 

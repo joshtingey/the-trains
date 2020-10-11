@@ -5,8 +5,43 @@
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
+import pandas as pd
 
 from app import app
+
+
+def get_ppm_df():
+    """Get a pandas dataframe containing all PPM data.
+
+    Returns:
+        pd.DataFrame: PPM Pandas dataframe
+    """
+    if app.mongo is None:
+        return None
+
+    docs = app.mongo.get("ppm")
+    if docs is None:
+        return None
+
+    ppm_dict = {
+        "date": [],
+        "total": [],
+        "on_time": [],
+        "late": [],
+        "ppm": [],
+        "rolling_ppm": [],
+    }
+
+    for doc in app.mongo.get("ppm"):
+        ppm_dict["date"].append(doc["date"])
+        ppm_dict["total"].append(doc["total"])
+        ppm_dict["on_time"].append(doc["on_time"])
+        ppm_dict["late"].append(doc["late"])
+        ppm_dict["ppm"].append(doc["ppm"])
+        ppm_dict["rolling_ppm"].append(doc["rolling_ppm"])
+
+    df = pd.DataFrame.from_dict(ppm_dict)
+    return df
 
 
 def body():
@@ -16,9 +51,11 @@ def body():
     Returns:
         html.Div: Dash layout
     """
-    df = app.mongo.get_ppm_df()
+    df = get_ppm_df()
     if df is None:
-        return html.Div(dbc.Alert("This is a danger alert. Scary!", color="danger"))
+        return html.Div(
+            dbc.Alert("Cannot retrieve data! Try again later!", color="danger")
+        )
 
     body = dbc.Container(
         [

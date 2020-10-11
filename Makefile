@@ -18,6 +18,9 @@ k8s:
 deploy:
 	skaffold run -f ./k8s/skaffold.yaml
 
+clean:
+	docker volume rm the-trains_mongo-volume
+
 black:
 	black src/ tests/
 

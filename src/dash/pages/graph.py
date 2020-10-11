@@ -7,8 +7,85 @@ import dash_bootstrap_components as dbc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 import plotly.graph_objects as go
+import pandas as pd
 
 from app import app
+
+
+def get_berths():
+    """Get the nodes and edges of the graph as dataframes.
+
+    Returns:
+        pd.DataFrame: nodes dataframe
+        pd.DataFrame: edges dataframe
+    """
+
+    def apply_text(node):
+        """Generate the hover text to display for each node.
+
+        Returns:
+            str: hover text for node
+        """
+        text = "Berth name: " + node["NAME"]
+
+        if node["FIXED"]:
+            text = text + ", Exact location: True"
+        else:
+            text = text + ", Exact location: False"
+
+        if node["LATEST_DESCR"] != "0000":
+            text = text + ", Current train:" + node["LATEST_DESCR"]
+        return text
+
+    def apply_colour(node):
+        """Generate colour of each node.
+
+        Returns:
+            str: color for node
+        """
+        if node["LATEST_DESCR"] == "0000":
+            return "#AFD275"
+        else:
+            return "#E7717D"
+
+    if app.mongo is None:
+        return None, None
+
+    berths = app.mongo.get("BERTHS")
+    if berths is None:
+        return None, None
+
+    selected = {}
+    for b in berths:
+        if "SELECTED" in list(b.keys()):
+            if b["SELECTED"]:
+                selected[b["NAME"]] = b
+
+    # Generate nodes dataframe
+    try:
+        nodes = pd.DataFrame.from_dict(selected, orient="index")
+        nodes["FIXED"].fillna(False, inplace=True)
+        nodes["TEXT"] = nodes.apply(apply_text, axis=1)
+        nodes["COLOUR"] = nodes.apply(apply_colour, axis=1)
+
+        # Generate edges dataframe
+        lat, lon = [], []
+        for name, data in selected.items():
+            if "CONNECTIONS" in list(data.keys()):
+                for connection in data["CONNECTIONS"]:
+                    if connection in selected:
+                        lat.append(data["LATITUDE"])
+                        lat.append(selected[connection]["LATITUDE"])
+                        lat.append(None)
+                        lon.append(data["LONGITUDE"])
+                        lon.append(selected[connection]["LONGITUDE"])
+                        lon.append(None)
+        edges = pd.DataFrame({"LATITUDE": lat, "LONGITUDE": lon})
+    except Exception as e:
+        app.logger.warning("Could not generate berths from database data: {}".format(e))
+        return None, None
+
+    return nodes, edges
 
 
 def get_graph_map():
@@ -18,9 +95,9 @@ def get_graph_map():
         go.Figure: Scattermapbox of rail network graph
     """
     # Get the nodes and edges and pandas dataframes from the database
-    nodes, edges = app.mongo.get_berths()
+    nodes, edges = get_berths()
     if nodes is None or edges is None:
-        return html.Div(dbc.Alert("This is a danger alert. Scary!", color="danger"))
+        return None
 
     # Plot the edges as lines between the nodes
     graph_map = go.Figure(
@@ -72,6 +149,12 @@ def body():
     Returns:
         html.Div: dash layout
     """
+    graph_map = get_graph_map()
+    if graph_map is None:
+        return html.Div(
+            dbc.Alert("Cannot retrieve data! Try again later!", color="danger")
+        )
+
     # Put everything in a dcc container and return
     body = dbc.Container(
         [
@@ -86,7 +169,7 @@ def body():
                     width={"size": 6, "offset": 3},
                 )
             ),
-            dbc.Row(dbc.Col(dcc.Graph(id="graph-map", figure=get_graph_map()))),
+            dbc.Row(dbc.Col(dcc.Graph(id="graph-map", figure=graph_map))),
             dcc.Interval(
                 id="graph-page-interval",
                 interval=1 * 30000,
