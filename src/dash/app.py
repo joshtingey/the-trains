@@ -44,7 +44,7 @@ def create_dash(server):
     server.logger.removeHandler(app.logger.handlers[0])
 
     # Initialise the mongo database
-    app.mongo = Mongo(app.logger, app.server.config["MONGO_URI"])
+    app.mongo = Mongo.connect(app.logger, app.server.config["MONGO_URI"])
 
     # Update the Flask config a default "TITLE" and then with any new Dash
     # configuration parameters that might have been updated so that we can

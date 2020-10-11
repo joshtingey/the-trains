@@ -3,28 +3,41 @@
 """Module to provide communication methods with the MongoDB database."""
 
 from pymongo import MongoClient
-import pandas as pd
 
 
 class Mongo(object):
     """Class to handle MongoDB data flow."""
 
-    def __init__(self, log, uri):
+    def __init__(self, log, client):
         """Initialise Mongo.
 
         Args:
             log (logging.logger): logger to use
-            uri (str): MongoDB connection string
+            client (pymongo.MongoClient): pymongo client
         """
         self.log = log  # We take the logger from the application
-        self.client = None  # Mongo database
+        self.client = client  # Mongo database
+
+    @classmethod
+    def connect(cls, log, uri):
+        """Connect to database, return None if not possible"""
         try:
             client = MongoClient(uri)
-            self.client = client.thetrains
-            self.log.info("Connected to mongo at {}".format(uri))
+            client = client.thetrains  # Using thetrains database
+            log.info("Connected to mongo at {}".format(uri))
+            return cls(log, client)
         except Exception:
-            self.log.warning("Mongo connection error for {}, continue".format(uri))
-            self.client = None
+            log.warning("Mongo connection error: {}".format(uri))
+            return None
+
+    def collections(self):
+        """Return list of all database collections."""
+        collections = None
+        try:
+            collections = self.client.list_collection_names()
+        except Exception as e:
+            self.log.warning("Mongo collections error ({})".format(e))
+        return collections
 
     def drop(self, name):
         """Drop a named collection.
@@ -35,7 +48,7 @@ class Mongo(object):
         try:
             self.client.drop_collection(name)
         except Exception as e:
-            self.log.warning("Mongo error ({})".format(e))
+            self.log.warning("Mongo drop error ({})".format(e))
 
     def add(self, collection, doc):
         """Add a document to a collection.
@@ -47,7 +60,7 @@ class Mongo(object):
         try:
             self.client[collection].insert_one(doc)
         except Exception as e:
-            self.log.warning("Mongo error ({})".format(e))
+            self.log.warning("Mongo add error ({})".format(e))
 
     def update(self, collection, selection, update):
         """Update document in collection by selection.
@@ -60,7 +73,7 @@ class Mongo(object):
         try:
             self.client[collection].update_one(selection, update, upsert=True)
         except Exception as e:
-            self.log.warning("Mongo error ({})".format(e))
+            self.log.warning("Mongo update error ({})".format(e))
 
     def get(self, collection):
         """Get all documents from a collection.
@@ -71,100 +84,5 @@ class Mongo(object):
         try:
             return self.client[collection].find()
         except Exception as e:
-            self.log.warning("Mongo error ({})".format(e))
+            self.log.warning("Mongo get error ({})".format(e))
             return None
-
-    def get_ppm_df(self):
-        """Get a pandas dataframe containing all PPM data.
-
-        Returns:
-            pd.DataFrame: PPM Pandas dataframe
-        """
-        ppm_dict = {
-            "date": [],
-            "total": [],
-            "on_time": [],
-            "late": [],
-            "ppm": [],
-            "rolling_ppm": [],
-        }
-
-        docs = self.get("ppm")
-        if docs is None:
-            return None
-
-        for doc in self.get("ppm"):
-            ppm_dict["date"].append(doc["date"])
-            ppm_dict["total"].append(doc["total"])
-            ppm_dict["on_time"].append(doc["on_time"])
-            ppm_dict["late"].append(doc["late"])
-            ppm_dict["ppm"].append(doc["ppm"])
-            ppm_dict["rolling_ppm"].append(doc["rolling_ppm"])
-
-        df = pd.DataFrame.from_dict(ppm_dict)
-        return df
-
-    def get_berths(self):
-        """Get the nodes and edges of the graph as dataframes.
-
-        Returns:
-            pd.DataFrame: nodes dataframe
-            pd.DataFrame: edges dataframe
-        """
-
-        def apply_text(node):
-            """Generate the hover text to display for each node.
-
-            Returns:
-                str: hover text for node
-            """
-            text = "Berth name: " + node["NAME"]
-
-            if node["FIXED"]:
-                text = text + ", Exact location: True"
-            else:
-                text = text + ", Exact location: False"
-
-            if node["LATEST_DESCR"] != "0000":
-                text = text + ", Current train:" + node["LATEST_DESCR"]
-            return text
-
-        def apply_colour(node):
-            """Generate colour of each node.
-
-            Returns:
-                str: color for node
-            """
-            if node["LATEST_DESCR"] == "0000":
-                return "#AFD275"
-            else:
-                return "#E7717D"
-
-        berths = self.get("BERTHS")
-        selected = {}
-        for b in berths:
-            if "SELECTED" in list(b.keys()):
-                if b["SELECTED"]:
-                    selected[b["NAME"]] = b
-
-        # Generate nodes dataframe
-        nodes = pd.DataFrame.from_dict(selected, orient="index")
-        nodes["FIXED"].fillna(False, inplace=True)
-        nodes["TEXT"] = nodes.apply(apply_text, axis=1)
-        nodes["COLOUR"] = nodes.apply(apply_colour, axis=1)
-
-        # Generate edges dataframe
-        lat, lon = [], []
-        for name, data in selected.items():
-            if "CONNECTIONS" in list(data.keys()):
-                for connection in data["CONNECTIONS"]:
-                    if connection in selected:
-                        lat.append(data["LATITUDE"])
-                        lat.append(selected[connection]["LATITUDE"])
-                        lat.append(None)
-                        lon.append(data["LONGITUDE"])
-                        lon.append(selected[connection]["LONGITUDE"])
-                        lon.append(None)
-        edges = pd.DataFrame({"LATITUDE": lat, "LONGITUDE": lon})
-
-        return nodes, edges
