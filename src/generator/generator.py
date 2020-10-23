@@ -8,7 +8,9 @@ import time
 import logging
 import functools
 import math
+import datetime
 
+import pandas as pd
 import networkx as nx
 
 from common.config import Config
@@ -44,6 +46,7 @@ class GraphGenerator(object):
             mongo (common.mongo.Mongo): Database class
             k (float): Spring layout k coefficient
             iterations (int): Spring layout iterations
+            cut_distance (float): Cut distance for cutting long distance connections
         """
         self.log = log
         self.mongo = mongo
@@ -68,32 +71,106 @@ class GraphGenerator(object):
     @timer
     def get_berths(self):
         """Generate the initial graph from the berths stored in the database."""
-        self.graph = nx.Graph()  # Create a new empty graph
-
-        # Get the berths from the database
         try:
-            berths = self.mongo.get("BERTHS")
+            # Get the BERTHS from the database
+            berths = {berth["NAME"]: berth for berth in self.mongo.get("BERTHS")}
             if berths is None:
                 return False
         except Exception as e:
-            self.log.error("Could not get berths from database, {}".format(e))
+            self.log.error("Could not get BERTHS from database, {}".format(e))
             return False
 
-        # Loop through all berths and add nodes and edges to the graph
-        for berth in berths:
-            if berth["FIXED"]:
-                self.graph.add_node(
-                    berth["NAME"],
-                    lon=berth["LONGITUDE"] * 100000,
-                    lat=berth["LATITUDE"] * 100000,
-                    fixed=True,
-                )
-            else:
-                self.graph.add_node(berth["NAME"], lon=None, lat=None, fixed=False)
+        try:
+            # Get the TRAINS from the database
+            trains = self.mongo.get("TRAINS")
+            if trains is None:
+                return False
+        except Exception as e:
+            self.log.error("Could not get TRAINS from database, {}".format(e))
+            return False
 
-            if "CONNECTIONS" in list(berth.keys()):
-                for connected_berth in berth["CONNECTIONS"]:
-                    self.graph.add_edge(berth["NAME"], connected_berth, weight=1.0)
+        self.graph = nx.Graph()
+        for train in trains:
+            # Create and tidy the dataframe
+            t = pd.DataFrame(train)
+            t = t.drop(["_id", "NAME"], axis=1)
+
+            # Check BERTHS and remove ones we don't want to use...
+            t = t[
+                t["BERTHS"].str.len() == 6
+            ]  # Check berth name length is equal to 6 characters
+            # Remove `STrike IN' berths
+            t = t[~t["BERTHS"].str.endswith("STIN")]
+            # Remove `Clear OUT' berths
+            t = t[~t["BERTHS"].str.endswith("COUT")]
+            # Remove current date berths
+            t = t[~t["BERTHS"].str.endswith("DATE")]
+            # Remove current time berths
+            t = t[~t["BERTHS"].str.endswith("TIME")]
+            # Remove current clock berths
+            t = t[~t["BERTHS"].str.endswith("CLCK")]
+            # Remove `Last Sent' berths
+            t = t[~t["BERTHS"].str.slice(start=2, stop=4).str.contains("LS")]
+            t = t[~t["BERTHS"].str.endswith("LS")]  # Remove `Last Sent' berths
+            # Remove `Train Reporting' link status berths
+            t = t[~t["BERTHS"].str.slice(start=2, stop=4).str.contains("TR")]
+            # Remove SMART link status berths
+            t = t[~t["BERTHS"].str.slice(start=2, stop=5).str.contains("SMT")]
+
+            # Calculate the delta times between berths...
+            t["DELTAS"] = t["TIMES"] - t["TIMES"].shift()
+
+            # Remove first berth as we have no context to make a decision about it...
+            t = t.iloc[1:]
+
+            # Assuming that the real TD berth is always reported first, we can get rid
+            # of all duplicate/fringe/waiting berths. Should probably uodate this as it
+            # is most likely not always the case, so need to check other same timed
+            # berths and use the most appropriate one, from the last three digits.
+            delta_berth_time = 5
+            t = t[t["DELTAS"] >= datetime.timedelta(seconds=delta_berth_time)]
+            t = t.reset_index()
+
+            # Remove duplicates of berths next to each other if exist
+            t = t.loc[t["BERTHS"].shift(-1) != t["BERTHS"]]
+
+            # Split the full train dataframe when there are large differences in time
+            delta_train_time = 1
+            splits = t.index[
+                t["DELTAS"] >= datetime.timedelta(hours=delta_train_time)
+            ].tolist()
+            splits.insert(0, 0)
+            splits.append(len(t.index))
+            paths = [t.iloc[splits[n] : splits[n + 1]] for n in range(len(splits) - 1)]
+            for path in paths:
+                for b_from, b_to, delta in zip(
+                    path["BERTHS"], path["BERTHS"][1:], path["DELTAS"][1:]
+                ):
+                    # Add the from berth to the graph
+                    if berths[b_from]["FIXED"]:
+                        self.graph.add_node(
+                            b_from,
+                            lon=berths[b_from]["LONGITUDE"] * 100000,
+                            lat=berths[b_from]["LATITUDE"] * 100000,
+                            fixed=True,
+                        )
+                    else:
+                        self.graph.add_node(b_from, lon=None, lat=None, fixed=False)
+
+                    # Add the to berth to the graph
+                    if berths[b_to]["FIXED"]:
+                        self.graph.add_node(
+                            b_to,
+                            lon=berths[b_to]["LONGITUDE"] * 100000,
+                            lat=berths[b_to]["LATITUDE"] * 100000,
+                            fixed=True,
+                        )
+                    else:
+                        self.graph.add_node(b_to, lon=None, lat=None, fixed=False)
+
+                    # Add the edge linking the berths to the graph
+                    # Could use the delta in the future to weight edge
+                    self.graph.add_edge(b_from, b_to, weight=1.0)
 
         self.log.info("Nodes from db {}".format(len(self.graph.nodes)))
 
@@ -196,7 +273,7 @@ class GraphGenerator(object):
             self.graph.nodes[node]["lat"] = position[0] / 100000
             self.graph.nodes[node]["lon"] = position[1] / 100000
 
-        return True
+        return node_positions
 
     @timer
     def update_berths(self):
@@ -207,11 +284,10 @@ class GraphGenerator(object):
                     "LONGITUDE": data["lon"],
                     "LATITUDE": data["lat"],
                     "SELECTED": True,
+                    "EDGES": [[edge[1] for edge in list(self.graph.edges(node))]],
                 }
             }
             self.mongo.update("BERTHS", {"NAME": node}, update)
-
-        self.graph = None  # Remove graph from memory
         return True
 
 

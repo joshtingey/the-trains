@@ -33,8 +33,8 @@ def get_berths():
         else:
             text = text + ", Exact location: False"
 
-        if node["LATEST_DESCR"] != "0000":
-            text = text + ", Current train:" + node["LATEST_DESCR"]
+        if node["LATEST_TRAIN"] != "0000":
+            text = text + ", Current train:" + node["LATEST_TRAIN"]
         return text
 
     def apply_colour(node):
@@ -43,7 +43,7 @@ def get_berths():
         Returns:
             str: color for node
         """
-        if node["LATEST_DESCR"] == "0000":
+        if node["LATEST_TRAIN"] == "0000":
             return "#AFD275"
         else:
             return "#E7717D"
@@ -71,14 +71,14 @@ def get_berths():
         # Generate edges dataframe
         lat, lon = [], []
         for name, data in selected.items():
-            if "CONNECTIONS" in list(data.keys()):
-                for connection in data["CONNECTIONS"]:
-                    if connection in selected:
+            if "EDGES" in list(data.keys()):
+                for edge in data["EDGES"][0]:
+                    if edge in selected:
                         lat.append(data["LATITUDE"])
-                        lat.append(selected[connection]["LATITUDE"])
+                        lat.append(selected[edge]["LATITUDE"])
                         lat.append(None)
                         lon.append(data["LONGITUDE"])
-                        lon.append(selected[connection]["LONGITUDE"])
+                        lon.append(selected[edge]["LONGITUDE"])
                         lon.append(None)
         edges = pd.DataFrame({"LATITUDE": lat, "LONGITUDE": lon})
     except Exception as e:

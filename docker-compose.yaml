@@ -25,17 +25,17 @@ services:
     networks:
       - main-network
 
-  generator:
-    container_name: generator
-    restart: "no"
-    build:
-      context: ./src
-      dockerfile: ./generator/Dockerfile
-    env_file: .env
-    depends_on:
-      - mongo
-    networks:
-      - main-network
+  #generator:
+  #  container_name: generator
+  #  restart: "no"
+  #  build:
+  #    context: ./src
+  #    dockerfile: ./generator/Dockerfile
+  #  env_file: .env
+  #  depends_on:
+  #    - mongo
+  #  networks:
+  #    - main-network
 
   dash:
     container_name: dash
