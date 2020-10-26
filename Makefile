@@ -12,14 +12,18 @@ down:
 	rm -rf ./src/generator/common/
 	rm -rf ./src/dash/common/
 
-k8s:
-	kubectl apply -f ./k8s/setup.yaml
-
-deploy:
-	skaffold run -f ./k8s/skaffold.yaml
-
 clean:
 	docker volume rm the-trains_mongo-volume
+
+k8s_setup:
+	kubectl apply -f ./k8s/setup.yaml
+
+k8s_deploy:
+	skaffold run -f ./k8s/skaffold.yaml
+
+k8s_delete:
+	skaffold delete -f ./k8s/skaffold.yaml
+	kubectl delete -f ./k8s/setup.yaml
 
 black:
 	black src/ tests/

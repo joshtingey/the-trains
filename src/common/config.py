@@ -26,10 +26,13 @@ class Config(object):
     COLLECTOR_TM = config("COLLECTOR_TM", cast=bool, default=False)
 
     # Generator configuration
-    GENERATOR_UPDATE_RATE = config("GENERATOR_UPDATE_RATE", cast=int, default=3600)
-    GENERATOR_K = config("GENERATOR_K", cast=float, default=0.00001)
-    GENERATOR_ITERATIONS = config("GENERATOR_ITERATIONS", cast=int, default=5000)
-    GENERATOR_CUT_DISTANCE = config("GENERATOR_CUT_DISTANCE", cast=float, default=500)
+    GENERATOR_RATE = config("GENERATOR_RATE", cast=int, default=3600)
+    GENERATOR_K = config("GENERATOR_K", cast=float, default=0.000001)
+    GENERATOR_ITER = config("GENERATOR_ITER", cast=int, default=5000)
+    GENERATOR_CUT_D = config("GENERATOR_CUT_D", cast=float, default=0.25)
+    GENERATOR_SCALE = config("GENERATOR_SCALE", cast=int, default=100000)
+    GENERATOR_DELTA_B = config("GENERATOR_DELTA_B", cast=int, default=5)
+    GENERATOR_DELTA_T = config("GENERATOR_DELTA_T", cast=int, default=1)
 
     # Dash configuration
     DASH_MAPBOX_TOKEN = config("DASH_MAPBOX_TOKEN", default="token")

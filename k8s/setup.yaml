@@ -9,8 +9,9 @@ kind: ServiceAccount
 metadata:
   name: gitlab-admin
   namespace: kube-system
+
 ---
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: gitlab-admin
@@ -31,19 +32,22 @@ metadata:
   namespace: thetrains
 data:
   LOG_LEVEL: "INFO"
-  MONGO_INITDB_ROOT_USERNAME: "example"
-  MONGO_INITDB_ROOT_PASSWORD: "example"
-  COLLECTOR_NR_USER: "example"
-  COLLECTOR_NR_PASS: "example"
+  MONGO_INITDB_ROOT_USERNAME: <example>
+  MONGO_INITDB_ROOT_PASSWORD: <example>
+  COLLECTOR_NR_USER: <example>
+  COLLECTOR_NR_PASS: <example>
   COLLECTOR_ATTEMPTS: "5"
   COLLECTOR_PPM: "True"
   COLLECTOR_TD: "True"
   COLLECTOR_TM: "False"
-  GENERATOR_UPDATE_RATE: "3600"
-  GENERATOR_K: "0.0001"
-  GENERATOR_ITERATIONS: "10000"
-  GENERATOR_CUT_DISTANCE: "500"
-  DASH_MAPBOX_TOKEN: "example"
+  GENERATOR_RATE: "3600"
+  GENERATOR_K: "0.000001"
+  GENERATOR_ITER: "5000"
+  GENERATOR_CUT_D: "0.25"
+  GENERATOR_SCALE: "100000"
+  GENERATOR_DELTA_B: "5"
+  GENERATOR_DELTA_T: "1"
+  DASH_MAPBOX_TOKEN: <example>
 
 ---
 apiVersion: cert-manager.io/v1alpha2
@@ -102,7 +106,7 @@ spec:
       targetPort: 8000
 
 ---
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: dash
@@ -120,9 +124,12 @@ spec:
       http:
         paths:
           - path: /
+            pathType: Prefix
             backend:
-              serviceName: dash
-              servicePort: 80
+              service:
+                name: dash
+                port:
+                  number: 80
 
 ---
 apiVersion: v1

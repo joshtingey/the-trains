@@ -91,7 +91,7 @@ class PPMFeed(StompFeed):
         log.debug("{}\n".format(doc))
 
         if self.mongo is not None:
-            self.mongo.add("ppm", doc)
+            self.mongo.add("PPM", doc)
 
 
 class TDFeed(StompFeed):
@@ -100,25 +100,40 @@ class TDFeed(StompFeed):
     The implementation follows the info available on the openraildata wiki at,
     https://wiki.openraildata.com/index.php?title=TD
 
-    Whenever a 'berth step' message is received, we 'update' a mongodb document
-    for the train it describes. The new berth is appended to a list of berths the
-    train has passed through as well as the time this happened.
+    ----------------------------------------------------------------
+    Whenever a `berth step' message is received we do the following...
 
-    Once a train has reached it destination, we set a 'complete' flag on the document.
-    As multiple trains with the same headcode/reporting number are possible within
-    a single day, if no activity is seen on a train for a hour we also set it as 'complete'
+    1) We update the `BERTHS' document for the `from' berth, removing the current train
+    description and time as well as adding the `to' berth to it's `CONNECTIONS' array
+    if not already there.
 
-    If the train has never been seen before, we append both the from and to berths
-    to the document.
+    2) We update the `BERTHS' document for the `to' berth, adding the new train
+    description and time, as well as adding the `from' berth to it's `CONNECTIONS'
+    array if not already there.
 
-    This then allows us to build up a network graph of the country using the list of berths
-    for each train, showing which berths are connected. As some berths in different train
-    describer areas can actually represent the sme physical train location we make a cut on
-    the time between berths and cluster any that occur within n seconds as being the same
-    physical location.
+    3) We update the mongodb `TRAINS' document for that specific headcode/reporting
+    number train. Appending the `to` berth and step time to their respective arrays.
 
-    The time taken to move between berths also gives and indication when averaged over multiple
-    trains, of the distance between the two berths, the speed of the line and congestion.
+    Whenever a `berth interpose' message is received we do the following...
+
+    1) We update the `BERTHS' document for the `to' berth, adding the new train
+    description and time.
+
+    3) We update the mongodb `TRAINS' document for that specific headcode/reporting
+    number train. Appending the `to` berth and time to their respective arrays.
+    ----------------------------------------------------------------
+
+    - Need to make sure the first berth in a journey is captured for each train, do we
+    need to append both the `from' and `to' berths to their respective `TRAINS' arrays
+    is the train has never been seen before?
+
+    - A network graph can then be built using the BERTHS and TRAINS data, connecting
+    berths together. Need to make a cut on movement time to make sure they are actually
+    connected.
+
+    - The average time taken to move between berths also gives and indication when
+    averaged over multiple trains, of the distance between the two berths, the speed of
+    the line and congestion. Which can be used to weight the edges of the graph etc...
     """
 
     def __init__(self, mongo):
@@ -141,48 +156,62 @@ class TDFeed(StompFeed):
         for msg in parsed:
             msg_type = list(msg.keys())[0]
             msg = msg[msg_type]
-            if msg_type == "CA_MSG":  # we only look at berth steps
-
-                # Get all the different msg fields
-                descr = msg["descr"]
-                td = msg["area_id"]
-                from_berth = msg["from"]
-                to_berth = msg["to"]
+            if msg_type == "CA_MSG":  # Berth Step message
+                train = msg["descr"]
+                berth_from = msg["area_id"] + msg["from"]
+                berth_to = msg["area_id"] + msg["to"]
                 time = datetime.datetime.fromtimestamp(int(msg["time"]) / 1000)
-
-                # If logging is debug print all the fields
                 log.debug(
-                    "{},{},{},{},{}\n".format(time, descr, td, from_berth, to_berth)
+                    "TD_CA_MSG: {},{},{},{}\n".format(time, train, berth_from, berth_to)
                 )
 
-                # Generate the full td+berth names of the from and to berths
-                from_name = msg["area_id"] + msg["from"]
-                to_name = msg["area_id"] + msg["to"]
-
-                from_update = {
-                    "$set": {
-                        "TD": td,
-                        "BERTH": from_berth,
-                        "LATEST_DESCR": "0000",
-                        "LATEST_TIME": time,
-                    },
-                    "$addToSet": {"CONNECTIONS": to_name},
+                # Generate update dictionaries
+                update_from = {
+                    "$set": {"LATEST_TRAIN": "0000", "LATEST_TIME": time},
+                    "$addToSet": {"CONNECTIONS": berth_to},
                     "$setOnInsert": {"FIXED": False},
                 }
-
-                to_update = {
-                    "$set": {
-                        "TD": td,
-                        "BERTH": to_berth,
-                        "LATEST_DESCR": descr,
-                        "LATEST_TIME": time,
-                    },
+                update_to = {
+                    "$set": {"LATEST_TRAIN": train, "LATEST_TIME": time},
+                    "$addToSet": {"CONNECTIONS": berth_from},
                     "$setOnInsert": {"FIXED": False},
                 }
+                update_train = {"$push": {"BERTHS": berth_to, "TIMES": time}}
 
+                # Run database updates
                 if self.mongo is not None:
-                    self.mongo.update("BERTHS", {"NAME": from_name}, from_update)
-                    self.mongo.update("BERTHS", {"NAME": to_name}, to_update)
+                    self.mongo.update("BERTHS", {"NAME": berth_from}, update_from)
+                    self.mongo.update("BERTHS", {"NAME": berth_to}, update_to)
+                    self.mongo.update("TRAINS", {"NAME": train}, update_train)
+
+            elif msg_type == "CC_MSG":  # Berth Interpose message
+                train = msg["descr"]
+                berth_to = msg["area_id"] + msg["to"]
+                time = datetime.datetime.fromtimestamp(int(msg["time"]) / 1000)
+                log.debug("TD_CC_MSG: {},{},{}\n".format(time, train, berth_to))
+
+                # Generate update dictionaries
+                update_to = {
+                    "$set": {"LATEST_TRAIN": train, "LATEST_TIME": time},
+                    "$setOnInsert": {"FIXED": False},
+                }
+                update_train = {"$push": {"BERTHS": berth_to, "TIMES": time}}
+
+                # Run database updates
+                if self.mongo is not None:
+                    self.mongo.update("BERTHS", {"NAME": berth_to}, update_to)
+                    self.mongo.update("TRAINS", {"NAME": train}, update_train)
+
+            elif msg_type in [
+                "CB_MSG",
+                "CT_MSG",
+                "SF_MSG",
+                "SG_MSG",
+                "SH_MSG",
+            ]:  # Other TD messages
+                pass
+            else:  # should not happen
+                log.warning("Received unknown TD message type: {}".format(msg_type))
 
 
 class TMFeed(StompFeed):
@@ -190,6 +219,10 @@ class TMFeed(StompFeed):
 
     The implementation follows the info available on the openraildata wiki at,
     https://wiki.openraildata.com/index.php?title=Train_Movements
+
+    We want to be able to activate and deactivate trains defined using the TD data, to
+    set a `STATUS' flag that says whether that train reporting number is currently
+    active. This also allows us to add extra metadata about the train in question.
     """
 
     def __init__(self, mongo):
@@ -215,12 +248,10 @@ class TMFeed(StompFeed):
                 # [activation, cancellation, unidentified, reinstatement,
                 #  change of origin, change of identity, change of location]
                 pass
-            elif msg_type == "0003":
+            elif msg_type == "0003":  # train movement
                 pass
-                # train movement
                 # train_id, actual_timestamp, reporting_stanox, next_report_stanox
-            else:
-                # should not happen
+            else:  # should not happen
                 log.warning("Received unknown TM message type")
 
 

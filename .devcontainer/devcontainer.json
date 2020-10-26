@@ -23,6 +23,5 @@
         "vs-kubernetes": {
             "vs-kubernetes.helm-path.linux": "/usr/local/bin/helm"
         }
-    },
-    "forwardPorts":[8000]
+    }
 }

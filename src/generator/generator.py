@@ -8,7 +8,9 @@ import time
 import logging
 import functools
 import math
+import datetime
 
+import pandas as pd
 import networkx as nx
 
 from common.config import Config
@@ -36,82 +38,157 @@ def timer(func):
 class GraphGenerator(object):
     """Graph generator class to approximate train network locations."""
 
-    def __init__(self, log, mongo, k, iterations, cut_distance):
+    def __init__(
+        self, log, mongo, k, iter, cut_d, scale, delta_b, delta_t,
+    ):
         """Initialise GraphGenerator.
 
         Args:
             log (logging.logger): Logger to use
             mongo (common.mongo.Mongo): Database class
             k (float): Spring layout k coefficient
-            iterations (int): Spring layout iterations
+            iter (int): Spring layout iterations
+            cut_d (float): Cut distance for cutting long distance connections
+            scale (int): Coordinate scaling for spring layout optimisation
+            delta_b (int): Berths within delta seconds will be classed as the same
+            delta_t (int): Split train data when there is a gap of delta hours
         """
         self.log = log
         self.mongo = mongo
         self.k = k
-        self.iterations = iterations
-        self.cut_distance = cut_distance
-        self.log.info("k: {}, iterations: {}".format(self.k, self.iterations))
+        self.iter = iter
+        self.cut_d = cut_d
+        self.scale = scale
+        self.delta_b = delta_b
+        self.delta_t = delta_t
+        self.log.info(
+            "k: {}, iter: {}, cut_d:{}, scale: {}, delta_b: {}, delta_t: {}".format(
+                k, iter, cut_d, scale, delta_b, delta_t
+            )
+        )
 
     def run(self):
         """Build, tidy, and layout the graph."""
         self.log.info("Starting graph generation at {}".format(time.ctime()))
-        if not self.get_berths():
-            return
-        if not self.clean_graph():
-            return
-        if not self.run_layout():
-            return
-        if not self.update_berths():
-            return
+        try:
+            self.get_berths()
+            self.remove_isolated_nodes()
+            self.remove_duplicate_locations()
+            self.remove_distant_nodes(only_fixed=True)
+            self.remove_floating_nodes()
+            self.run_layout(all_nodes=False)
+            self.remove_distant_nodes(only_fixed=False)
+            self.run_layout(all_nodes=True)
+            self.update_berths()
+        except Exception as e:
+            self.log.warning("Could not complete generation: {}".format(e))
+
         self.log.info("Graph generation completed at {}".format(time.ctime()))
 
     @timer
     def get_berths(self):
         """Generate the initial graph from the berths stored in the database."""
-        self.graph = nx.Graph()  # Create a new empty graph
+        # Get the BERTHS and TRAINS from the database
+        berths = {berth["NAME"]: berth for berth in self.mongo.get("BERTHS")}
+        trains = self.mongo.get("TRAINS")
+        if berths is None or trains is None:
+            raise Exception("BERTH or TRAIN data is empty!")
 
-        # Get the berths from the database
-        try:
-            berths = self.mongo.get("BERTHS")
-            if berths is None:
-                return False
-        except Exception as e:
-            self.log.error("Could not get berths from database, {}".format(e))
-            return False
+        self.graph = nx.Graph()
+        for train in trains:
+            # Create and tidy the dataframe
+            t = pd.DataFrame(train)
+            t = t.drop(["_id", "NAME"], axis=1)
 
-        # Loop through all berths and add nodes and edges to the graph
-        for berth in berths:
-            if berth["FIXED"]:
-                self.graph.add_node(
-                    berth["NAME"],
-                    lon=berth["LONGITUDE"] * 100000,
-                    lat=berth["LATITUDE"] * 100000,
-                    fixed=True,
-                )
-            else:
-                self.graph.add_node(berth["NAME"], lon=None, lat=None, fixed=False)
+            # Check BERTHS and remove ones we don't want to use...
+            t = t[
+                t["BERTHS"].str.len() == 6
+            ]  # Check berth name length is equal to 6 characters
+            # Remove `STrike IN' berths
+            t = t[~t["BERTHS"].str.endswith("STIN")]
+            # Remove `Clear OUT' berths
+            t = t[~t["BERTHS"].str.endswith("COUT")]
+            # Remove current date berths
+            t = t[~t["BERTHS"].str.endswith("DATE")]
+            # Remove current time berths
+            t = t[~t["BERTHS"].str.endswith("TIME")]
+            # Remove current clock berths
+            t = t[~t["BERTHS"].str.endswith("CLCK")]
+            # Remove `Last Sent' berths
+            t = t[~t["BERTHS"].str.slice(start=2, stop=4).str.contains("LS")]
+            t = t[~t["BERTHS"].str.endswith("LS")]  # Remove `Last Sent' berths
+            # Remove `Train Reporting' link status berths
+            t = t[~t["BERTHS"].str.slice(start=2, stop=4).str.contains("TR")]
+            # Remove SMART link status berths
+            t = t[~t["BERTHS"].str.slice(start=2, stop=5).str.contains("SMT")]
 
-            if "CONNECTIONS" in list(berth.keys()):
-                for connected_berth in berth["CONNECTIONS"]:
-                    self.graph.add_edge(berth["NAME"], connected_berth, weight=1.0)
+            # Calculate the delta times between berths...
+            t["DELTAS"] = t["TIMES"] - t["TIMES"].shift()
+
+            # Remove first berth as we have no context to make a decision about it...
+            t = t.iloc[1:]
+
+            # Assuming that the real TD berth is always reported first, we can get rid
+            # of all duplicate/fringe/waiting berths. Should probably uodate this as it
+            # is most likely not always the case, so need to check other same timed
+            # berths and use the most appropriate one, from the last three digits.
+            t = t[t["DELTAS"] >= datetime.timedelta(seconds=self.delta_b)]
+            t = t.reset_index()
+
+            # Remove duplicates of berths next to each other if exist
+            t = t.loc[t["BERTHS"].shift(-1) != t["BERTHS"]]
+
+            # Split the full train dataframe when there are large differences in time
+            splits = t.index[
+                t["DELTAS"] >= datetime.timedelta(hours=self.delta_t)
+            ].tolist()
+            splits.insert(0, 0)
+            splits.append(len(t.index))
+            paths = [
+                t.iloc[splits[n] : splits[n + 1]]  # noqa: E203
+                for n in range(len(splits) - 1)
+            ]
+            for path in paths:
+                for b_from, b_to, delta in zip(
+                    path["BERTHS"], path["BERTHS"][1:], path["DELTAS"][1:]
+                ):
+                    # Add the from berth to the graph
+                    if berths[b_from]["FIXED"]:
+                        self.graph.add_node(
+                            b_from,
+                            lon=berths[b_from]["LONGITUDE"],
+                            lat=berths[b_from]["LATITUDE"],
+                            fixed=True,
+                        )
+                    else:
+                        self.graph.add_node(b_from, lon=None, lat=None, fixed=False)
+
+                    # Add the to berth to the graph
+                    if berths[b_to]["FIXED"]:
+                        self.graph.add_node(
+                            b_to,
+                            lon=berths[b_to]["LONGITUDE"],
+                            lat=berths[b_to]["LATITUDE"],
+                            fixed=True,
+                        )
+                    else:
+                        self.graph.add_node(b_to, lon=None, lat=None, fixed=False)
+
+                    # Add the edge linking the berths to the graph
+                    # Could use the delta in the future to weight edge
+                    self.graph.add_edge(b_from, b_to, weight=1.0)
 
         self.log.info("Nodes from db {}".format(len(self.graph.nodes)))
-
-        return True
-
-    def clean_graph(self):
-        """Clean the graph to remove nodes/edges to not be considered in the layout."""
-        self.remove_isolated_nodes()
-        self.remove_duplicate_locations()
-        self.remove_distant_nodes()
-        self.remove_floating_nodes()
-        self.log.info("Nodes remaining after cleaning {}".format(len(self.graph.nodes)))
-        return True
 
     @timer
     def remove_isolated_nodes(self):
         """Remove isolated nodes from the graph."""
         self.graph.remove_nodes_from(list(nx.isolates(self.graph)))
+        self.log.info(
+            "Nodes remaining after 'remove_isolated_nodes': {}".format(
+                len(self.graph.nodes)
+            )
+        )
 
     @timer
     def remove_duplicate_locations(self):
@@ -143,21 +220,33 @@ class GraphGenerator(object):
                 except Exception as e:
                     self.log.debug("Already passed {}".format(e))
                     pass
+        self.log.info(
+            "Nodes remaining after 'remove_duplicate_locations': {}".format(
+                len(self.graph.nodes)
+            )
+        )
 
     @timer
-    def remove_distant_nodes(self):
+    def remove_distant_nodes(self, only_fixed=True):
         """Remove linked fixed nodes that are distant from one another."""
         for edge in self.graph.edges:
             node_0 = self.graph.nodes[edge[0]]
             node_1 = self.graph.nodes[edge[1]]
-            if node_0["fixed"] is True and node_1["fixed"] is True:
-                distance = math.sqrt(
-                    math.pow(node_0["lat"] - node_1["lat"], 2)
-                    + math.pow(node_0["lon"] - node_1["lon"], 2)
-                )
-                if distance >= self.cut_distance:
-                    # self.log.debug(distance)
-                    self.graph.remove_edge(edge[0], edge[1])
+            if node_0["lon"] is None or node_1["lon"] is None:
+                continue
+            d = math.sqrt(
+                math.pow(node_0["lat"] - node_1["lat"], 2)
+                + math.pow(node_0["lon"] - node_1["lon"], 2)
+            )
+            if only_fixed and node_0["fixed"] and node_1["fixed"] and d >= self.cut_d:
+                self.graph.remove_edge(edge[0], edge[1])
+            elif not only_fixed and d >= self.cut_d:
+                self.graph.remove_edge(edge[0], edge[1])
+        self.log.info(
+            "Nodes remaining after 'remove_distant_nodes': {}".format(
+                len(self.graph.nodes)
+            )
+        )
 
     @timer
     def remove_floating_nodes(self):
@@ -167,36 +256,52 @@ class GraphGenerator(object):
         nodes_between = [x for x in c_score if c_score[x] != 0.0]
         nodes_between.extend(known)  # Add on fixed nodes
         self.graph = self.graph.subgraph(nodes_between)
+        self.log.info(
+            "Nodes remaining after 'remove_floating_nodes': {}".format(
+                len(self.graph.nodes)
+            )
+        )
 
     @timer
-    def run_layout(self):
+    def run_layout(self, all_nodes=False):
         """Run the spring layout that positions all the nodes."""
         # Run the spring layout algorithm on the network
-        known_dict = dict(
-            (n, [d["lat"], d["lon"]])
+        fixed_positions = dict(
+            (n, [d["lat"] * self.scale, d["lon"] * self.scale])
             for n, d in self.graph.nodes().items()
             if d["fixed"] is True
         )
+        if all_nodes:
+            all_positions = dict(
+                (n, [d["lat"] * self.scale, d["lon"] * self.scale])
+                for n, d in self.graph.nodes().items()
+            )
 
-        self.log.info("There are {} fixed nodes".format(len(known_dict)))
+        self.log.info("There are {} fixed nodes".format(len(fixed_positions)))
 
-        try:
+        if all_nodes:
             node_positions = nx.spring_layout(
                 self.graph,
                 k=self.k,
-                pos=known_dict,
-                fixed=known_dict.keys(),
-                iterations=self.iterations,
+                pos=all_positions,
+                fixed=fixed_positions.keys(),
+                iterations=self.iter,
             )
-        except Exception as e:
-            self.log.error("Could not calculate layout, {}".format(e))
-            return False
+        else:
+            node_positions = nx.spring_layout(
+                self.graph,
+                k=self.k,
+                pos=fixed_positions,
+                fixed=fixed_positions.keys(),
+                iterations=self.iter,
+            )
 
         for node, position in node_positions.items():
-            self.graph.nodes[node]["lat"] = position[0] / 100000
-            self.graph.nodes[node]["lon"] = position[1] / 100000
+            self.graph.nodes[node]["lat"] = position[0] / self.scale
+            self.graph.nodes[node]["lon"] = position[1] / self.scale
 
-        return True
+        self.graph = nx.Graph(self.graph)  # Unfreeze graph
+        return node_positions
 
     @timer
     def update_berths(self):
@@ -207,11 +312,10 @@ class GraphGenerator(object):
                     "LONGITUDE": data["lon"],
                     "LATITUDE": data["lat"],
                     "SELECTED": True,
+                    "EDGES": [[edge[1] for edge in list(self.graph.edges(node))]],
                 }
             }
             self.mongo.update("BERTHS", {"NAME": node}, update)
-
-        self.graph = None  # Remove graph from memory
         return True
 
 
@@ -239,14 +343,17 @@ def main():
         log,
         mongo,
         Config.GENERATOR_K,
-        Config.GENERATOR_ITERATIONS,
-        Config.GENERATOR_CUT_DISTANCE,
+        Config.GENERATOR_ITER,
+        Config.GENERATOR_CUT_D,
+        Config.GENERATOR_SCALE,
+        Config.GENERATOR_DELTA_B,
+        Config.GENERATOR_DELTA_T,
     )
 
     # Run the graph generator in a loop, run every GRAPH_UPDATE_RATE seconds
     while 1:
+        time.sleep(Config.GENERATOR_RATE)
         gen.run()
-        time.sleep(Config.GENERATOR_UPDATE_RATE)
 
 
 if __name__ == "__main__":

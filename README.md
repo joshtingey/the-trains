@@ -38,14 +38,14 @@ First, the ./k8s/setup.yaml file needs to be modified for the cluster setup. Add
 To run the initial cluster setup run...
 
 ```bash
-make k8s
+make k8s_setup
 ```
 
 This sets up the namespace, configuration, certificates and the application service and ingress.
 To build and push the containers to the container repository and then deploy to the cluster run...
 
 ```bash
-make deploy
+make k8s_deploy
 ```
 
 To continuously build and deploy to the cluster while you make changes run...

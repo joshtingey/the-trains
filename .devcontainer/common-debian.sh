@@ -79,7 +79,10 @@ if [ "${PACKAGES_ALREADY_INSTALLED}" != "true" ]; then
         locales \
         python3-pip \
         make \
-        sudo"
+        sudo \
+        graphviz \
+        libgraphviz-dev \
+        pkg-config"
 
     # Install libssl1.1 if available
     if [[ ! -z $(apt-cache --names-only search ^libssl1.1$) ]]; then
