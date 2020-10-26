@@ -15,10 +15,13 @@ def check_base_attributes(config):
         "COLLECTOR_PPM",
         "COLLECTOR_TD",
         "COLLECTOR_TM",
-        "GENERATOR_UPDATE_RATE",
+        "GENERATOR_RATE",
         "GENERATOR_K",
-        "GENERATOR_ITERATIONS",
-        "GENERATOR_CUT_DISTANCE",
+        "GENERATOR_ITER",
+        "GENERATOR_CUT_D",
+        "GENERATOR_SCALE",
+        "GENERATOR_DELTA_B",
+        "GENERATOR_DELTA_T",
     ]
     types = [
         str,
@@ -35,6 +38,9 @@ def check_base_attributes(config):
         float,
         int,
         float,
+        int,
+        int,
+        int,
     ]
     errors = []
     for i, attribute in enumerate(attributes):

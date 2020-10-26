@@ -103,34 +103,37 @@ class TDFeed(StompFeed):
     ----------------------------------------------------------------
     Whenever a `berth step' message is received we do the following...
 
-    1) We update the `BERTHS' document for the `from' berth, removing the current train description
-    and time as well as adding the `to' berth to it's `CONNECTIONS' array if not already there.
+    1) We update the `BERTHS' document for the `from' berth, removing the current train
+    description and time as well as adding the `to' berth to it's `CONNECTIONS' array
+    if not already there.
 
-    2) We update the `BERTHS' document for the `to' berth, adding the new train description and
-    time, as well as adding the `from' berth to it's `CONNECTIONS' array if not already there.
+    2) We update the `BERTHS' document for the `to' berth, adding the new train
+    description and time, as well as adding the `from' berth to it's `CONNECTIONS'
+    array if not already there.
 
-    3) We update the mongodb `TRAINS' document for that specific headcode/reporting number train.
-    Appending the `to` berth and step time to their respective arrays.
+    3) We update the mongodb `TRAINS' document for that specific headcode/reporting
+    number train. Appending the `to` berth and step time to their respective arrays.
 
     Whenever a `berth interpose' message is received we do the following...
 
-    1) We update the `BERTHS' document for the `to' berth, adding the new train description and
-    time.
+    1) We update the `BERTHS' document for the `to' berth, adding the new train
+    description and time.
 
-    3) We update the mongodb `TRAINS' document for that specific headcode/reporting number train.
-    Appending the `to` berth and time to their respective arrays.
+    3) We update the mongodb `TRAINS' document for that specific headcode/reporting
+    number train. Appending the `to` berth and time to their respective arrays.
     ----------------------------------------------------------------
 
-    - Need to make sure the first berth in a journey is captured for each train, do we need to
-    append both the `from' and `to' berths to their respective `TRAINS' arrays is the train has
-    never been seen before?
+    - Need to make sure the first berth in a journey is captured for each train, do we
+    need to append both the `from' and `to' berths to their respective `TRAINS' arrays
+    is the train has never been seen before?
 
-    - A network graph can then be built using the BERTHS and TRAINS data, connecting berths
-    together. Need to make a cut on movement time to make sure they are actually connected.
+    - A network graph can then be built using the BERTHS and TRAINS data, connecting
+    berths together. Need to make a cut on movement time to make sure they are actually
+    connected.
 
-    - The average time taken to move between berths also gives and indication when averaged over
-    multiple trains, of the distance between the two berths, the speed of the line and congestion.
-    Which can be used to weight the edges of the graph etc...
+    - The average time taken to move between berths also gives and indication when
+    averaged over multiple trains, of the distance between the two berths, the speed of
+    the line and congestion. Which can be used to weight the edges of the graph etc...
     """
 
     def __init__(self, mongo):
@@ -217,9 +220,9 @@ class TMFeed(StompFeed):
     The implementation follows the info available on the openraildata wiki at,
     https://wiki.openraildata.com/index.php?title=Train_Movements
 
-    We want to be able to activate and deactivate trains defined using the TD data, to set a
-    `STATUS' flag that says whether that train reporting number is currently active. This also
-    allows us to add extra metadata about the train in question.
+    We want to be able to activate and deactivate trains defined using the TD data, to
+    set a `STATUS' flag that says whether that train reporting number is currently
+    active. This also allows us to add extra metadata about the train in question.
     """
 
     def __init__(self, mongo):
