@@ -16,7 +16,9 @@
         "ms-python.vscode-pylance",
         "ms-kubernetes-tools.vscode-kubernetes-tools",
         "eamodio.gitlens",
-        "davidanson.vscode-markdownlint"
+        "davidanson.vscode-markdownlint",
+        "github.vscode-pull-request-github",
+        "mongodb.mongodb-vscode"
     ],
     "settings": {
         "terminal.integrated.shell.linux": "/bin/bash",

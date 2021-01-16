@@ -25,11 +25,8 @@ k8s_delete:
 	skaffold delete -f ./k8s/skaffold.yaml
 	kubectl delete -f ./k8s/setup.yaml
 
-black:
-	black src/ tests/
-
 test:
-	pytest --pydocstyle --flake8 --black -v -W ignore::pytest.PytestDeprecationWarning .
+	pytest .
 
 jupyter:
 	jupyter-lab --ip=0.0.0.0 --allow-root --port 8891

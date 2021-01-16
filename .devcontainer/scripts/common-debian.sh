@@ -82,7 +82,11 @@ if [ "${PACKAGES_ALREADY_INSTALLED}" != "true" ]; then
         sudo \
         graphviz \
         libgraphviz-dev \
-        pkg-config"
+        pkg-config \
+        build-essential \
+        libssl-dev \
+        libffi-dev \
+        python3-dev"
 
     # Install libssl1.1 if available
     if [[ ! -z $(apt-cache --names-only search ^libssl1.1$) ]]; then

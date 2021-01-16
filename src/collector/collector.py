@@ -36,17 +36,17 @@ class Feeds(enum.Enum):
 class StompFeed(object):
     """Base feed handling class, which all others derive from."""
 
-    def __init__(self, topic, durable, mongo):
+    def __init__(self, topics, durables, mongo):
         """Initialise the StompFeed.
 
         Args:
             name (int): "Feeds" enumeration number
-            topic (str): NR topic string
-            durable (str): durable connection name
+            topics ([str]): NR topics list
+            durables ([str]): durable connection names
             mongo (common.mongo.Mongo): database class
         """
-        self.topic = topic
-        self.durable = durable
+        self.topics = topics
+        self.durables = durables
         self.mongo = mongo
 
     async def handle_message(self, message):
@@ -67,7 +67,7 @@ class PPMFeed(StompFeed):
         Args:
             mongo (common.mongo.Mongo): database class
         """
-        super().__init__("/topic/RTPPM_ALL", "thetrains-ppm", mongo)
+        super().__init__(["/topic/RTPPM_ALL"], ["thetrains-ppm"], mongo)
 
     async def handle_message(self, message):
         """Handle the PPM JSON message."""
@@ -142,8 +142,21 @@ class TDFeed(StompFeed):
         Args:
             mongo (common.mongo.Mongo): database class
         """
-        # TODO: Get a list of TD signal area topics to follow, should be all!
-        super().__init__("/topic/TD_LNW_C_SIG_AREA", "thetrains-td", mongo)
+        super().__init__(  # For now just collect all the "London North Western" data
+            [
+                "/topic/TD_LNW_C_SIG_AREA",
+                "/topic/TD_LNW_WMC_SIG_AREA",
+                "/topic/TD_LNW_LC_SIG_AREA",
+                "/topic/TD_WCS_SIG_AREA",
+            ],
+            [
+                "thetrains-td-lnw-c",
+                "thetrains-td-lnw-wmc",
+                "thetrains-td-lnw-lc",
+                "thetrains-td-wcs",
+            ],
+            mongo,
+        )
 
     async def handle_message(self, message):
         """Handle the TD JSON message."""
@@ -153,9 +166,9 @@ class TDFeed(StompFeed):
             log.error("Can't decode STOMP message")
             return
 
-        for msg in parsed:
-            msg_type = list(msg.keys())[0]
-            msg = msg[msg_type]
+        for parsed_msg in parsed:
+            msg_type = list(parsed_msg.keys())[0]
+            msg = parsed_msg[msg_type]
             if msg_type == "CA_MSG":  # Berth Step message
                 train = msg["descr"]
                 berth_from = msg["area_id"] + msg["from"]
@@ -231,7 +244,7 @@ class TMFeed(StompFeed):
         Args:
             mongo (common.mongo.Mongo): database class
         """
-        super().__init__("/topic/TRAIN_MVT_ED_TOC", "thetrains-tm", mongo)
+        super().__init__(["/topic/TRAIN_MVT_ED_TOC"], ["thetrains-tm"], mongo)
 
     async def handle_message(self, message):
         """Handle the TD JSON message."""
@@ -285,19 +298,20 @@ class STOMPCollector(object):
     https://wiki.openraildata.com/index.php?title=Durable_Subscription
     """
 
-    def __init__(self, mongo, conn_attempts, nr_user, nr_pass):
+    def __init__(self, mongo, feeds, conn_attempts, nr_user, nr_pass):
         """Initialise the STOMPCollector.
 
         Args:
             mongo (common.mongo.Mongo): database class
+            feeds ([int]): List of "Feeds" enumeration numbers
             config (common.config.Config): configuration class
             conn_attempts (int): max number of connection attempts
             nr_user (str): network rail data feed username
             nr_pass (str): network rail data feed password
         """
-        self.mongo = mongo  # Mongo database
-        self.conn = None  # STOMP connection
-        self.feeds = {}  # STOMP feed subscriptions
+        self.mongo = mongo
+        self.conn = None
+        self.feeds = [get_feed(f, self.mongo) for f in feeds]
         self.attempts = conn_attempts
         self.nr_user = nr_user
         self.nr_pass = nr_pass
@@ -309,29 +323,26 @@ class STOMPCollector(object):
                 vhost="datafeeds.networkrail.co.uk",
                 heartbeats=(100000, 100000),
             )
-            self.conn.set_listener("handler", self)  # Register self
+            self.conn.set_listener("handler", self)  # Register self as handler
         except Exception as e:
-            log.warning("STOMP setup error ({}), continue anyway".format(e))
-            self.conn = None
+            log.fatal("STOMP setup error ({})".format(e))
+            self.exit()
 
         # Setup signal handlers
         signal.signal(signal.SIGINT, self.exit_handler)
         signal.signal(signal.SIGTERM, self.exit_handler)
 
-    def connect_and_subscribe(self):
-        """Connect and resubscribe to all current feeds."""
+    def start(self):
+        """Start the Network Rail STOMP collector."""
+        # Disconnect and reset if already connected
+        if self.conn.is_connected():
+            self.unsubscribe()
+            self.conn.disconnect()
+            log.info("Disconnected from NR STOMP Server")
+
+        # Connect and sunscribe
         self.connect()
-        for feed in self.feeds.keys():
-            try:  # Attempt to subscribe to the feed
-                self.conn.subscribe(
-                    self.feeds[feed].topic,
-                    self.feeds[feed].durable,
-                    ack="client-individual",
-                    headers={"activemq.subscriptionName": self.feeds[feed].durable},
-                )
-                log.info("Subscribed to {}".format(feed))
-            except Exception as e:
-                log.error("STOMP subscription error ({})".format(e))
+        self.subscribe()
 
     def connect(self):
         """Connect to the Network Rail STOMP Server."""
@@ -340,17 +351,12 @@ class STOMPCollector(object):
             time.sleep(pow(attempt, 2))  # Exponential backoff in wait
 
             try:  # Attempt STOMP connection to Network Rail
-                if self.conn is not None:
-                    self.conn.connect(
-                        username=self.nr_user,
-                        passcode=self.nr_pass,
-                        wait=True,
-                        headers={"client-id": self.nr_user},
-                    )
-                else:
-                    log.warning("No STOMP connection to connect to")
-                    break
-
+                self.conn.connect(
+                    username=self.nr_user,
+                    passcode=self.nr_pass,
+                    wait=True,
+                    headers={"client-id": self.nr_user},
+                )
                 log.info("STOMP connection successful")
                 break  # Leave connection attempt loop and proceed
             except Exception as e:
@@ -358,70 +364,58 @@ class STOMPCollector(object):
 
             if attempt == (self.attempts - 1):
                 log.fatal("Maximum number of connection attempts made")
-                sys.exit(0)
+                self.exit()
 
-    def subscribe(self, name):
-        """Subscribe to a Network Rail STOMP feed.
-
-        Args:
-            name (int): "Feeds" enumeration number
-        """
-        feed = get_feed(name, self.mongo)
-
-        if name in self.feeds:  # Check if we already have this feed
-            log.warning("Already subscribed to this feed")
-            return
-
-        if feed is not None:
+    def subscribe(self):
+        """Subscribe to the Network Rail STOMP feeds."""
+        for feed in self.feeds:
             try:  # Attempt to subscribe to the feed
-                self.conn.subscribe(
-                    feed.topic,
-                    feed.durable,
-                    ack="client-individual",
-                    headers={"activemq.subscriptionName": feed.durable},
-                )
-                self.feeds[name] = feed
-                log.info("Subscribed to feed ({})".format(name))
+                for topic, durable in zip(feed.topics, feed.durables):
+                    self.conn.subscribe(
+                        topic,
+                        durable,
+                        ack="client-individual",
+                        headers={"activemq.subscriptionName": durable},
+                    )
+                    log.info("Subscribed to feed ({})".format(durable))
             except Exception as e:
                 log.error("STOMP subscription error ({})".format(e))
 
-    def unsubscribe(self, name):
-        """Unsubscribe from a Network Rail STOMP feed."""
-        if name in self.feeds:
+    def unsubscribe(self):
+        """Unsubscribe from the Network Rail STOMP feeds."""
+        for feed in self.feeds:
             try:
-                self.conn.unsubscribe(self.feeds[name].durable)
-                del self.feeds[name]
-                log.info("Unsubscribed from feed ({})".format(name))
+                for durable in feed.durables:
+                    self.conn.unsubscribe(durable)
+                    log.info("Unsubscribed from feed ({})".format(durable))
             except Exception as e:
-                log.error("STOMP unsubscribe error ({}), keep feed".format(e))
+                log.error("STOMP unsubscription error ({})".format(e))
                 return
-        else:
-            log.warning("No feed with that name")
 
     def on_message(self, headers, message):
         """STOMP on_message handler."""
         log.debug("Got message")
         self.conn.ack(id=headers["message-id"], subscription=headers["subscription"])
 
-        for name, feed in self.feeds.items():
-            if str(feed.topic) == str(headers["destination"]):
+        for feed in self.feeds:
+            if str(headers["destination"]) in feed.topics:
                 asyncio.run(feed.handle_message(message))
                 return
 
     def on_error(self, headers, message):
         """STOMP on_error handler."""
         log.error("STOMP connection error '{}'".format(message))
-        self.exit()
+        self.start()
 
     def on_disconnected(self):
         """STOMP on_disconnected handler."""
         log.error("STOMP connection disconnect")
-        self.exit()
+        self.start()
 
     def on_heartbeat_timeout(self):
         """STOMP on_heartbeat_timeout handler."""
         log.error("STOMP connection heartbeat timeout")
-        self.exit()
+        self.start()
 
     def exit_handler(self, sig, frame):
         """Signal exit handler."""
@@ -431,9 +425,7 @@ class STOMPCollector(object):
     def exit(self):
         """Exit method to close connections and exit."""
         if self.conn.is_connected():
-            for feed in self.feeds.keys():
-                self.conn.unsubscribe(self.feeds[feed].durable)
-                log.info("Unsubscribed from feed ({})".format(feed))
+            self.unsubscribe()
             self.conn.disconnect()
             log.info("Disconnected from NR STOMP Server")
         sys.exit(0)
@@ -454,27 +446,26 @@ def main():
                 mongo.update("BERTHS", {"NAME": key}, {"$set": set_data})
 
     # Setup the STOMP national rail data feed collector and connect
+    feeds = []
+    if Config.COLLECTOR_PPM:
+        feeds.append(Feeds.PPM)
+    if Config.COLLECTOR_TD:
+        feeds.append(Feeds.TD)
+    if Config.COLLECTOR_TM:
+        feeds.append(Feeds.TM)
+
     collector = STOMPCollector(
         mongo,
+        feeds,
         Config.COLLECTOR_ATTEMPTS,
         Config.COLLECTOR_NR_USER,
         Config.COLLECTOR_NR_PASS,
     )
-    collector.connect()
-
-    # Subscribe to the configured feeds
-    if Config.COLLECTOR_PPM:
-        collector.subscribe(Feeds.PPM)
-
-    if Config.COLLECTOR_TD:
-        collector.subscribe(Feeds.TD)
-
-    if Config.COLLECTOR_TM:
-        collector.subscribe(Feeds.TM)
+    collector.start()
 
     # Infinite loop
     while 1:
-        time.sleep(1)
+        time.sleep(30)
 
 
 if __name__ == "__main__":

@@ -4,13 +4,13 @@ FROM python:3.8.6-slim-buster
 WORKDIR /dash
 
 # Install dependencies
-COPY common/requirements.txt common/
-COPY dash/requirements.txt ./
+COPY src/common/requirements.txt common/
+COPY src/dash/requirements.txt ./
 RUN pip install -r ./common/requirements.txt -r requirements.txt --no-cache-dir
 
 # Copy common and dash code
-COPY common/ common/
-COPY dash/ ./
+COPY src/common/ common/
+COPY src/dash/ ./
 
 # Expose the dash app port
 EXPOSE 8000

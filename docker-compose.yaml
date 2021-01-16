@@ -17,8 +17,8 @@ services:
     container_name: collector
     restart: "no"
     build:
-      context: ./src
-      dockerfile: ./collector/Dockerfile
+      context: ./
+      dockerfile: ./src/collector/Dockerfile
     env_file: .env
     depends_on:
       - mongo
@@ -29,8 +29,8 @@ services:
     container_name: generator
     restart: "no"
     build:
-      context: ./src
-      dockerfile: ./generator/Dockerfile
+      context: ./
+      dockerfile: ./src/generator/Dockerfile
     env_file: .env
     depends_on:
       - mongo
@@ -41,8 +41,8 @@ services:
     container_name: dash
     restart: "no"
     build:
-      context: ./src
-      dockerfile: ./dash/Dockerfile
+      context: ./
+      dockerfile: ./src/dash/Dockerfile
     ports:
       - "8000:8000"
     env_file: .env

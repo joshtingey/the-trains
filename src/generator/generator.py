@@ -39,7 +39,15 @@ class GraphGenerator(object):
     """Graph generator class to approximate train network locations."""
 
     def __init__(
-        self, log, mongo, k, iter, cut_d, scale, delta_b, delta_t,
+        self,
+        log,
+        mongo,
+        k,
+        iter,
+        cut_d,
+        scale,
+        delta_b,
+        delta_t,
     ):
         """Initialise GraphGenerator.
 
@@ -219,7 +227,6 @@ class GraphGenerator(object):
                     self.graph.nodes[base_node]["lat"] = lat
                 except Exception as e:
                     self.log.debug("Already passed {}".format(e))
-                    pass
         self.log.info(
             "Nodes remaining after 'remove_duplicate_locations': {}".format(
                 len(self.graph.nodes)

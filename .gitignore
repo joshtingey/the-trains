@@ -9,3 +9,4 @@ src/collector/common/
 src/generator/common/
 src/dash/common/
 .setup.yaml
+.pytest_cache

@@ -11,8 +11,8 @@ ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
 # Install needed packages and setup non-root user.
-COPY .devcontainer/common-debian.sh /tmp/library-scripts/
-COPY .devcontainer/docker-debian.sh /tmp/library-scripts/
+COPY .devcontainer/scripts/common-debian.sh /tmp/library-scripts/
+COPY .devcontainer/scripts/docker-debian.sh /tmp/library-scripts/
 RUN apt-get update \
     && /bin/bash /tmp/library-scripts/common-debian.sh "${INSTALL_ZSH}" "${USERNAME}" "${USER_UID}" "${USER_GID}" "${UPGRADE_PACKAGES}" \
     # Use Docker script from script library to set things up
@@ -21,7 +21,7 @@ RUN apt-get update \
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/library-scripts/
 
 # Setup KUBECONFIG file
-COPY .devcontainer/copy-kube-config.sh /usr/local/share/
+COPY .devcontainer/scripts/copy-kube-config.sh /usr/local/share/
 RUN echo "source /usr/local/share/copy-kube-config.sh" | tee -a /root/.bashrc >> /root/.zshrc
 
 # Install kubectl
