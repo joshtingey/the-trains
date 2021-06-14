@@ -4,7 +4,7 @@
 [![Pipeline](https://gitlab.com/JoshTingey/the-trains/badges/master/pipeline.svg)](https://gitlab.com/JoshTingey/the-trains/pipelines)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-A personal project to gather, explore, analyse and present train-related data collected primarily from the [Network Rail data feeds](https://wiki.openraildata.com/index.php?title=Main_Page). Furthermore, a `graph' of the UK rail network is generated and then presented using a [Dash](https://plotly.com/dash/)([Flask](https://flask.palletsprojects.com/en/1.1.x/)) application. The live website for this project is at [thetrains.co.uk](https://thetrains.co.uk/).
+A personal project to gather, explore, analyse and present train-related data collected primarily from the [Network Rail data feeds](https://wiki.openraildata.com/index.php?title=Main_Page). Primarily, a `graph' of the UK rail network is generated and presented using a [Dash](https://plotly.com/dash/)([Flask](https://flask.palletsprojects.com/en/1.1.x/)) application. The live website for this project is at [thetrains.co.uk](https://thetrains.co.uk/).
 
 Currently, the deployment consists of 4 containers:
 
@@ -14,8 +14,6 @@ Currently, the deployment consists of 4 containers:
 4. dash - Dash application frontend to display the generated graph and other analysis
 
 The [wiki](https://github.com/joshtingey/the-trains/wiki) contains detailed information on the projects inner workings.
-
-All code is replicated across both a [github](https://github.com/joshtingey/the-trains) and [gitlab](https://gitlab.com/JoshTingey/the-trains) repository with the later being used to run the ci/cd pipeline.
 
 ## Develop locally with docker-compose
 
