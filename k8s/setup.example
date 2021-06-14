@@ -5,24 +5,13 @@ metadata:
 
 ---
 apiVersion: v1
-kind: ServiceAccount
+kind: Secret
 metadata:
-  name: gitlab-admin
-  namespace: kube-system
-
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: gitlab-admin
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-subjects:
-  - kind: ServiceAccount
-    name: gitlab-admin
-    namespace: kube-system
+  name: githubregistrykey
+  namespace: thetrains
+data:
+  .dockerconfigjson: <example>
+type: kubernetes.io/dockerconfigjson
 
 ---
 apiVersion: v1

@@ -2,18 +2,18 @@ apiVersion: skaffold/v2beta2
 kind: Config
 build:
   artifacts:
-    - image: registry.gitlab.com/joshtingey/the-trains/collector
-      context: ./src
+    - image: ghcr.io/joshtingey/collector
+      #context: ./src
       docker:
-        dockerfile: ./collector/Dockerfile
-    - image: registry.gitlab.com/joshtingey/the-trains/generator
-      context: ./src
+        dockerfile: ./src/collector/Dockerfile
+    - image: ghcr.io/joshtingey/generator
+      #context: ./src
       docker:
-        dockerfile: ./generator/Dockerfile
-    - image: registry.gitlab.com/joshtingey/the-trains/dash
-      context: ./src
+        dockerfile: ./src/generator/Dockerfile
+    - image: ghcr.io/joshtingey/dash
+      #context: ./src
       docker:
-        dockerfile: ./dash/Dockerfile
+        dockerfile: ./src/dash/Dockerfile
   tagPolicy:
     sha256: {}
 deploy:

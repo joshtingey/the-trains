@@ -15,9 +15,11 @@ spec:
     spec:
       containers:
         - name: collector
-          image: registry.gitlab.com/joshtingey/the-trains/collector:latest
+          image: ghcr.io/joshtingey/collector:latest
           imagePullPolicy: "Always"
           envFrom:
             - configMapRef:
                 name: thetrains-config
+      imagePullSecrets:
+        - name: githubregistrykey
       restartPolicy: Always

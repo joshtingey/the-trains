@@ -15,10 +15,12 @@ spec:
     spec:
       containers:
         - name: dash
-          image: registry.gitlab.com/joshtingey/the-trains/dash:latest
+          image: ghcr.io/joshtingey/dash:latest
           imagePullPolicy: "Always"
           envFrom:
             - configMapRef:
                 name: thetrains-config
           ports:
             - containerPort: 8000
+      imagePullSecrets:
+        - name: githubregistrykey

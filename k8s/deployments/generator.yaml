@@ -15,9 +15,11 @@ spec:
     spec:
       containers:
         - name: generator
-          image: registry.gitlab.com/joshtingey/the-trains/generator:latest
+          image: ghcr.io/joshtingey/generator:latest
           imagePullPolicy: "Always"
           envFrom:
             - configMapRef:
                 name: thetrains-config
+      imagePullSecrets:
+        - name: githubregistrykey
       restartPolicy: Always
