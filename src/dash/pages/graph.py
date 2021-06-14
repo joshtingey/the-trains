@@ -2,6 +2,8 @@
 
 """Graph page layout module."""
 
+import datetime
+
 import dash_core_components as dcc
 import dash_bootstrap_components as dbc
 import dash_html_components as html
@@ -12,6 +14,40 @@ import pandas as pd
 from app import app
 
 
+def get_sizes():
+    """Get the sizes of the nodes given frequency of use.
+
+    Returns:
+        dict: dict of node sizes
+    """
+
+    trains = app.mongo.get("TRAINS")
+    if trains is None:
+        return None
+
+    # Get the current time and delta
+    time_now = datetime.datetime.now()
+    time_delta = datetime.timedelta(hours=1)
+
+    # Get counts of trains passing through berths in the past hour
+    usage = {}
+    for train in trains:
+        for time, berth in zip(train["TIMES"], train["BERTHS"]):
+            if berth not in usage:
+                usage[berth] = 0
+            if (time_now - time) < time_delta:
+                usage[berth] += 1
+
+    # Get the sizes by scaling and applying a minimum
+    scale = 1
+    min_size = 5
+    sizes = {}
+    for key, value in usage.items():
+        sizes[key] = (value * scale) + min_size
+
+    return usage, sizes
+
+
 def get_berths():
     """Get the nodes and edges of the graph as dataframes.
 
@@ -19,6 +55,25 @@ def get_berths():
         pd.DataFrame: nodes dataframe
         pd.DataFrame: edges dataframe
     """
+    usage, sizes = get_sizes()
+    if sizes is None:
+        return None, None
+
+    def apply_usage(node):
+        """Get the count of how many trains have used berth in last hour.
+
+        Returns:
+            float: usage of the node
+        """
+        return usage[node["NAME"]]
+
+    def apply_size(node):
+        """Generate the size of the node from how frequently train use it.
+
+        Returns:
+            float: size for the node
+        """
+        return sizes[node["NAME"]]
 
     def apply_text(node):
         """Generate the hover text to display for each node.
@@ -26,15 +81,19 @@ def get_berths():
         Returns:
             str: hover text for node
         """
-        text = "Berth name: " + node["NAME"]
-
+        text = "TD area: " + str(node["NAME"])[:2] + "<br />"
+        text = text + "Berth: " + str(node["NAME"])[2:] + "<br />"
+        if str(node["DESCRIPTION"]) != "nan":
+            text = text + "Description: " + str(node["DESCRIPTION"]) + "<br />"
         if node["FIXED"]:
-            text = text + ", Exact location: True"
+            text = text + "Fixed: True" + "<br />"
         else:
-            text = text + ", Exact location: False"
+            text = text + "Fixed: False" + "<br />"
+        text = text + "Usage: " + str(node["USAGE"]) + " trains/hr<br />"
+        text = text + "Updated: " + str(node["LATEST_TIME"]) + "<br />"
 
         if node["LATEST_TRAIN"] != "0000":
-            text = text + ", Current train:" + node["LATEST_TRAIN"]
+            text = text + "Train: " + str(node["LATEST_TRAIN"])
         return text
 
     def apply_colour(node):
@@ -44,7 +103,7 @@ def get_berths():
             str: color for node
         """
         if node["LATEST_TRAIN"] == "0000":
-            return "#AFD275"
+            return "#263025"
         else:
             return "#E7717D"
 
@@ -61,12 +120,14 @@ def get_berths():
             if b["SELECTED"]:
                 selected[b["NAME"]] = b
 
-    # Generate nodes dataframe
     try:
+        # Generate nodes dataframe
         nodes = pd.DataFrame.from_dict(selected, orient="index")
         nodes["FIXED"].fillna(False, inplace=True)
-        nodes["TEXT"] = nodes.apply(apply_text, axis=1)
         nodes["COLOUR"] = nodes.apply(apply_colour, axis=1)
+        nodes["SIZE"] = nodes.apply(apply_size, axis=1)
+        nodes["USAGE"] = nodes.apply(apply_usage, axis=1)
+        nodes["TEXT"] = nodes.apply(apply_text, axis=1)
 
         # Generate edges dataframe
         lat, lon = [], []
@@ -117,7 +178,7 @@ def get_graph_map():
             lat=nodes["LATITUDE"].tolist(),
             lon=nodes["LONGITUDE"].tolist(),
             marker=go.scattermapbox.Marker(
-                size=12, color=nodes["COLOUR"].tolist(), opacity=0.7
+                size=nodes["SIZE"].tolist(), color=nodes["COLOUR"].tolist(), opacity=0.7
             ),
             hovertext=nodes["TEXT"].tolist(),
             hoverinfo="text",
@@ -127,15 +188,15 @@ def get_graph_map():
     # Update the mapbox layout
     graph_map.update_layout(
         autosize=True,
-        height=800,
+        height=1000,
         hovermode="closest",
         showlegend=False,
         mapbox=dict(
             accesstoken=app.server.config["DASH_MAPBOX_TOKEN"],
-            style="streets",
+            style="light",
             pitch=0,
-            zoom=10,
-            center=go.layout.mapbox.Center(lat=53.4771, lon=-2.2297),
+            zoom=9,
+            center=go.layout.mapbox.Center(lat=53.3, lon=-2.5),  # 53.4771, -2.2297
         ),
     )
 
@@ -161,18 +222,24 @@ def body():
             dbc.Row(
                 dbc.Col(
                     dbc.Card(
-                        "This map displays the generated 'graph' of the UK rail network. \
-                            Red markers indicate a current train location. \
-                            It is updated every 30 seconds.",
-                        body=True,
+                        dbc.CardBody([
+                            html.P("A graph of the UK rail network generated from \
+                                individual train movements captured from the Network Rail feeds and a subset of known fixed locations. \
+                                Each node represents a train describer 'berth' which usually, but not always, represents a signal.\
+                                Red nodes indicate the live locations of trains on the network, \
+                                whilst the node size indicates the frequency of usage. Hovering over each node provides additional information.\
+                                The graph is updated every 5 seconds. \
+                                Only the west coast mainline signal areas are considered for now."),
+                        ]),
+                        color="secondary"
                     ),
-                    width={"size": 6, "offset": 3},
+                    width={"size": 10, "offset": 1},
                 )
             ),
             dbc.Row(dbc.Col(dcc.Graph(id="graph-map", figure=graph_map))),
             dcc.Interval(
                 id="graph-page-interval",
-                interval=1 * 30000,
+                interval=1 * 5000,
                 n_intervals=0,  # in milliseconds
             ),
         ],

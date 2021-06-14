@@ -69,6 +69,7 @@ class GraphGenerator(object):
         self.scale = scale
         self.delta_b = delta_b
         self.delta_t = delta_t
+        self.clean_delta = 2
         self.log.info(
             "k: {}, iter: {}, cut_d:{}, scale: {}, delta_b: {}, delta_t: {}".format(
                 k, iter, cut_d, scale, delta_b, delta_t
@@ -79,19 +80,63 @@ class GraphGenerator(object):
         """Build, tidy, and layout the graph."""
         self.log.info("Starting graph generation at {}".format(time.ctime()))
         try:
+            # 1) Clean berths to remove stale train records
+            self.clean_berths()
+
+            # 2) Get all the berths, non are isolated as they are all connected
             self.get_berths()
-            self.remove_isolated_nodes()
-            self.remove_duplicate_locations()
-            self.remove_distant_nodes(only_fixed=True)
-            self.remove_floating_nodes()
+
+            # 3) Get the single largest connected network
+            self.get_largest_network()
+
+            # 4) Run the first layout iteration
             self.run_layout(all_nodes=False)
+
+            # 5) Remove long edges, isolated nodes and get largest network
             self.remove_distant_nodes(only_fixed=False)
+            self.remove_isolated_nodes()
+            self.get_largest_network()
+
+            # 6) Run the second layout iteration
             self.run_layout(all_nodes=True)
+
+            # 7) Remove long edges, isolated nodes and get largest network
+            self.cut_d = 0.15
+            self.remove_distant_nodes(only_fixed=False)
+            self.remove_isolated_nodes()
+            self.get_largest_network()
+
+            # 8) Run the third layout iteration
+            self.run_layout(all_nodes=True)
+
+            # 9) Update the berth layout in the database
             self.update_berths()
         except Exception as e:
             self.log.warning("Could not complete generation: {}".format(e))
 
         self.log.info("Graph generation completed at {}".format(time.ctime()))
+
+    @timer
+    def clean_berths(self):
+        """Clean the database berths to remove stale train records."""
+        # Get the BERTHS and TRAINS from the database
+        berths = self.mongo.get("BERTHS")
+        if berths is None:
+            raise Exception("BERTH or TRAIN data is empty!")
+
+        # Get the current time and delta
+        time_now = datetime.datetime.now()
+        time_delta = datetime.timedelta(hours=self.clean_delta)
+
+        num_cleaned = 0
+        for berth in berths:
+            if "LATEST_TIME" in berth:
+                if (time_now - berth["LATEST_TIME"]) > time_delta:
+                    num_cleaned += 1
+                    update = {"$set": {"LATEST_TRAIN": "0000", "LATEST_TIME": berth["LATEST_TIME"]}}
+                    self.mongo.update("BERTHS", {"NAME": berth["NAME"]}, update)
+
+        self.log.info("Cleaned {} berths".format(num_cleaned))
 
     @timer
     def get_berths(self):
@@ -199,6 +244,12 @@ class GraphGenerator(object):
         )
 
     @timer
+    def get_largest_network(self):
+        """Just consider the single largest connected network."""
+        largest_component = max(nx.connected_components(self.graph), key=len)
+        self.graph = nx.Graph(self.graph.subgraph(largest_component))
+
+    @timer
     def remove_duplicate_locations(self):
         """Combine fixed nodes that have the same location."""
         fixed = [n for n, d in self.graph.nodes().items() if d["fixed"] is True]
@@ -235,7 +286,7 @@ class GraphGenerator(object):
 
     @timer
     def remove_distant_nodes(self, only_fixed=True):
-        """Remove linked fixed nodes that are distant from one another."""
+        """Remove linked nodes that are distant from one another."""
         for edge in self.graph.edges:
             node_0 = self.graph.nodes[edge[0]]
             node_1 = self.graph.nodes[edge[1]]
@@ -313,6 +364,11 @@ class GraphGenerator(object):
     @timer
     def update_berths(self):
         """Update the berth positions in the database."""
+        # First unselect all berths
+        update = {"$set": {"SELECTED": False}}
+        self.mongo.update("BERTHS", {}, update, many=True)
+
+        # Now update the selected berths
         for node, data in self.graph.nodes(data=True):
             update = {
                 "$set": {
@@ -359,8 +415,8 @@ def main():
 
     # Run the graph generator in a loop, run every GRAPH_UPDATE_RATE seconds
     while 1:
-        time.sleep(Config.GENERATOR_RATE)
         gen.run()
+        time.sleep(Config.GENERATOR_RATE)
 
 
 if __name__ == "__main__":

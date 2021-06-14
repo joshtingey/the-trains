@@ -62,7 +62,7 @@ class Mongo(object):
         except Exception as e:
             self.log.warning("Mongo add error ({})".format(e))
 
-    def update(self, collection, selection, update):
+    def update(self, collection, selection, update, many=False):
         """Update document in collection by selection.
 
         Args:
@@ -71,7 +71,10 @@ class Mongo(object):
             update (dict): document update
         """
         try:
-            self.client[collection].update_one(selection, update, upsert=True)
+            if many:
+                self.client[collection].update_many(selection, update, upsert=True)
+            else:
+                self.client[collection].update_one(selection, update, upsert=True)
         except Exception as e:
             self.log.warning("Mongo update error ({})".format(e))
 

@@ -19,7 +19,7 @@ def get_ppm_df():
     if app.mongo is None:
         return None
 
-    docs = app.mongo.get("ppm")
+    docs = app.mongo.get("PPM")
     if docs is None:
         return None
 
@@ -32,7 +32,7 @@ def get_ppm_df():
         "rolling_ppm": [],
     }
 
-    for doc in app.mongo.get("ppm"):
+    for doc in docs:
         ppm_dict["date"].append(doc["date"])
         ppm_dict["total"].append(doc["total"])
         ppm_dict["on_time"].append(doc["on_time"])
@@ -41,6 +41,7 @@ def get_ppm_df():
         ppm_dict["rolling_ppm"].append(doc["rolling_ppm"])
 
     df = pd.DataFrame.from_dict(ppm_dict)
+    app.logger.warning(len(df))
     return df
 
 
@@ -70,21 +71,24 @@ def body():
                                     "y": df["total"],
                                     "type": "scatter",
                                     "name": "Total",
+                                    "marker": {"color": "#263025"},
                                 },
                                 {
                                     "x": df["date"],
                                     "y": df["on_time"],
                                     "type": "scatter",
                                     "name": "On Time",
+                                    "marker": {"color": "#a3eba0"},
                                 },
                                 {
                                     "x": df["date"],
                                     "y": df["late"],
                                     "type": "scatter",
                                     "name": "Late",
+                                    "marker": {"color": "#E7717D"},
                                 },
                             ],
-                            "layout": {"title": "Current Train Totals"},
+                            "layout": {"title": "Number of Trains"},
                         },
                     ),
                     width=12,
@@ -101,12 +105,14 @@ def body():
                                     "y": df["ppm"],
                                     "type": "scatter",
                                     "name": "PPM",
+                                    "marker": {"color": "#263025"},
                                 },
                                 {
                                     "x": df["date"],
                                     "y": df["rolling_ppm"],
                                     "type": "scatter",
                                     "name": "Rolling PPM",
+                                    "marker": {"color": "#E7717D"},
                                 },
                             ],
                             "layout": {"title": "Public Performance Measure (PPM)"},
