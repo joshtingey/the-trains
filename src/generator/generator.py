@@ -133,7 +133,12 @@ class GraphGenerator(object):
             if "LATEST_TIME" in berth:
                 if (time_now - berth["LATEST_TIME"]) > time_delta:
                     num_cleaned += 1
-                    update = {"$set": {"LATEST_TRAIN": "0000", "LATEST_TIME": berth["LATEST_TIME"]}}
+                    update = {
+                        "$set": {
+                            "LATEST_TRAIN": "0000",
+                            "LATEST_TIME": berth["LATEST_TIME"],
+                        }
+                    }
                     self.mongo.update("BERTHS", {"NAME": berth["NAME"]}, update)
 
         self.log.info("Cleaned {} berths".format(num_cleaned))

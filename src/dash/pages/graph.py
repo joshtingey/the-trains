@@ -20,7 +20,6 @@ def get_sizes():
     Returns:
         dict: dict of node sizes
     """
-
     trains = app.mongo.get("TRAINS")
     if trains is None:
         return None
@@ -222,16 +221,20 @@ def body():
             dbc.Row(
                 dbc.Col(
                     dbc.Card(
-                        dbc.CardBody([
-                            html.P("A graph of the UK rail network generated from \
+                        dbc.CardBody(
+                            [
+                                html.P(
+                                    "A graph of the UK rail network generated from \
                                 individual train movements captured from the Network Rail feeds and a subset of known fixed locations. \
                                 Each node represents a train describer 'berth' which usually, but not always, represents a signal.\
                                 Red nodes indicate the live locations of trains on the network, \
                                 whilst the node size indicates the frequency of usage. Hovering over each node provides additional information.\
                                 The graph is updated every 5 seconds. \
-                                Only the west coast mainline signal areas are considered for now."),
-                        ]),
-                        color="secondary"
+                                Only the west coast mainline central signal area (around Manchester) is considered for now."
+                                ),
+                            ]
+                        ),
+                        color="secondary",
                     ),
                     width={"size": 10, "offset": 1},
                 )

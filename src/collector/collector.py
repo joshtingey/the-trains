@@ -142,17 +142,7 @@ class TDFeed(StompFeed):
         Args:
             mongo (common.mongo.Mongo): database class
         """
-        super().__init__(
-            ["/topic/TD_LNW_C_SIG_AREA",
-             "/topic/TD_LNW_WMC_SIG_AREA",
-             "/topic/TD_LNW_LC_SIG_AREA",
-             "/topic/TD_WCS_SIG_AREA"], 
-            ["thetrains-td-lnw-c",
-             "thetrains-td-lnw-wmc",
-             "thetrains-td-lnw-lc",
-             "thetrains-td-wcs"], 
-            mongo
-        )
+        super().__init__(["/topic/TD_LNW_C_SIG_AREA"], ["thetrains-td-lnw-c"], mongo)
 
     async def handle_message(self, message):
         """Handle the TD JSON message."""
