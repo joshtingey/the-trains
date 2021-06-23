@@ -8,13 +8,15 @@ A project to gather, explore, analyse and present train related data collected p
 
 The full deployment consists of four containers:
 
-1. mongo - MongoDB database instance to persist all data
-2. collector - Constantly gathers a large volume of raw train movement data from
-   the Network Rail feeds for storage in the MongoDB instance.
-3. generator - Cleans and processes raw train movement data to generate a novel
+1. mongo - A MongoDB database instance to persist all data.
+2. collector - A process to robustly gather a large volume of live train
+   movement data from the Network Rail feeds for storage in the MongoDB
+   instance.
+3. generator - A data transformation process that runs on a timer. Its purpose
+   is to clean and process the raw train movement data to generate a novel
    graphical representation of the U.K rail network. A Fruchterman-Reingold
-   force-directed algorithm is used for position estimation.
-4. dash - Dash frontend application to display the generated graphical network
+   force-directed algorithm is used for the estimation of node positions.
+4. dash - A Dash frontend application to display the generated graphical network
    alongside live network usage.
 
 The [wiki](https://github.com/joshtingey/the-trains/wiki) contains information on the projects inner workings.
