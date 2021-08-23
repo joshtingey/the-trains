@@ -5,6 +5,6 @@ pytest-black==0.3.12
 black==20.8b1
 flake8==3.8.4
 pydocstyle==5.1.1
-jupyterlab==3.0.5
+jupyterlab==3.0.17
 matplotlib==3.3.3
 convertbng==0.6.25
